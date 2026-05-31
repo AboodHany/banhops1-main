@@ -1,0 +1,80 @@
+-- 1. Create the microbuses table
+CREATE TABLE IF NOT EXISTS microbuses (
+    id SERIAL PRIMARY KEY,
+    category VARCHAR(255) NOT NULL,
+    line_no INT NOT NULL,
+    route VARCHAR(255) NOT NULL,
+    fare DECIMAL(10, 2) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 2. Enable Row Level Security (RLS) optionally, or allow public read access
+ALTER TABLE microbuses ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow public read access" ON microbuses FOR SELECT USING (true);
+
+-- 3. Insert the microbus lines data
+
+-- Cleaned & flipped microbuses insert statements
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('القليوبية والمنوفية', 11, 'قويسنا - بنها', 11.5);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('القليوبية والمنوفية', 12, 'ميت بره - بنها', 11.5);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('القليوبية والمنوفية', 13, 'شبين الكوم - بنها', 19.0);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('القليوبية والمنوفية', 14, 'الالباجور (إقليمي) - بنها', 16.0);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('القليوبية والمنوفية', 15, 'الباجور (زراعي) - بنها', 14.0);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('القليوبية والمنوفية', 16, 'مشيرف - بنها', 8.0);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('القليوبية والمنوفية', 17, 'مدينة السادات - بنها', 65.5);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('القليوبية والجيزة', 6, 'أكتوبر - بنها', 60.0);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('القليوبية والجيزة', 8, 'الهرم (المنصورية) - بنها', 58.0);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('القليوبية والجيزة', 26, 'أحمد عرابي - بنها', 21.5);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('القليوبية والدقهلية', 1, 'ميت غمر - بنها', 17.0);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('القليوبية والدقهلية', 6, 'المنصورة - بنها', 48.0);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('القليوبية والقاهرة', 19, 'السلام - بنها', 30.0);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('القليوبية والقاهرة', 22, 'مدينة بدر - بنها', 41.5);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('القليوبية والقاهرة', 23, 'أحمد حلمي - مجمع مواقف بنها', 26.5);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('شبين القناطر', 1, 'شبين القناطر - بنها', 15.5);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('القليوبية والإسكندرية', 1, 'الإسكندرية - مجمع مواقف بنها', 126.5);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('طوخ', 2, 'طوخ - بنها', 7.0);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('بنها', 3, 'دجوى - بنها', 7.5);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('بنها', 4, 'طحلة - بنها', 7.0);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('بنها', 6, 'بطا - بنها', 5.0);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('بنها', 8, 'ميت عاصم - بنها', 6.0);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('بنها', 9, 'بتمدّه - بنها', 7.0);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('بنها', 11, 'سندنهور - بنها', 5.0);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('بنها', 12, 'شبلنجة - بنها', 7.0);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('بنها', 14, 'كفر مويس - بنها', 6.0);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('بنها', 15, 'العمار - بنها', 9.0);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('بنها', 16, 'أمياى - بنها', 7.0);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('بنها', 17, 'بلتان - بنها', 7.0);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('بنها', 18, 'برشوم - بنها', 9.0);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('بنها', 19, 'العبادلة - بنها', 7.5);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('بنها', 20, 'فرسيس - كفر - بنها', 6.5);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('بنها', 21, 'كفر الجزار - ميت الحوفيين', 6.5);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('بنها', 22, 'كفر الجزار - بقيرة', 6.5);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('بنها', 23, 'كفر الجزار - دملو', 6.0);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('بنها', 24, 'كفر الجزار - ورورة', 6.0);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('بنها', 25, 'ميت العطار - بنها', 6.5);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('بنها', 26, 'ميت راضى - بنها', 6.5);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('بنها', 27, 'نقباس - بنها', 6.5);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('بنها', 28, 'الشموت - بنها', 6.5);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('بنها', 29, 'ميت كنانة - بنها', 9.0);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('بنها', 30, 'جزيرة بلى - عرابى - بنها', 9.0);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('بنها', 31, 'مرصفا - بنها', 7.5);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('بنها', 32, 'طنط الجزيرة - بنها', 9.0);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('بنها', 33, 'كفر الحصة - بنها', 6.5);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('بنها', 34, 'السفاينة - بنها', 6.5);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('بنها', 36, 'جمجرة - بنها', 5.0);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('بنها', 37, 'الصفا - بنها', 7.0);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('بنها', 38, 'الرملة - بنها', 5.0);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('بنها', 41, 'الشقير - بنها', 7.0);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('بنها', 42, 'برقطا - بنها', 7.0);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('بنها', 43, 'مجول - بنها', 7.0);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('بنها', 49, 'داخلي سوزوكي - بنها', 5.0);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('بنها', 50, 'العبور (الشباب) - بنها', 41.0);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('بنها', 51, 'العبور (الجامعة) - بنها', 45.0);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('بنها', 54, 'كفر العرب - بنها', 7.0);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('حي غرب شبرا الخيمة', 1, 'أحمد عرابي مؤسسة - بنها', 21.5);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('كفر شكر', 1, 'كفر شكر - بنها', 8.5);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('كفر شكر', 3, 'أسنيت - بنها', 6.0);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('كفر شكر', 14, 'الشقر - بنها', 7.0);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('كفر شكر', 15, 'كفر على شرف الدين - بنها', 6.5);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('قها', 2, 'قها - بنها', 9.0);
+INSERT INTO microbuses (category, line_no, route, fare) VALUES ('القناطر الخيرية', 5, 'القناطر - بنها', 12.5);

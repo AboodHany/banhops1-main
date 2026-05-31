@@ -1,16 +1,39 @@
-# banhops1
+# BanHops
 
-A new Flutter project.
+BanHops is a Flutter-based smart transport guide for Benha, Egypt. The app includes localized onboarding, Supabase-backed auth scaffolding, multi-modal route comparison, an AI assistant layer, trip history, profile analytics, and a train map viewer.
 
-## Getting Started
+## Required configuration
 
-This project is a starting point for a Flutter application.
+Provide these values before enabling production integrations:
 
-A few resources to get you started if this is your first Flutter project:
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+- `AI_AGENT_BASE_URL`
+- `AI_AGENT_API_KEY`
+- `GOOGLE_MAPS_API_KEY`
+- `ENABLE_GOOGLE_SIGN_IN=true` when Google OAuth is configured in Supabase and the native clients
+- `ENABLE_FACEBOOK_SIGN_IN=true` when Facebook OAuth is configured in Supabase and the native clients
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+Example launch:
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```powershell
+flutter run --dart-define=SUPABASE_URL=your_url --dart-define=SUPABASE_ANON_KEY=your_anon_key --dart-define=AI_AGENT_BASE_URL=https://your-ai-agent.example.com --dart-define=AI_AGENT_API_KEY=your_ai_key --dart-define=GOOGLE_MAPS_API_KEY=your_maps_key
+```
+
+## Missing source data you still need to provide
+
+- The official Benha microbus line matrix: stops, fares, service hours, and line identifiers.
+- The municipal and regional train schedule dataset: line-by-line departure times, headways, and interchange rules.
+- The exact AI Agent API contract: request URL, required headers, and response JSON schema.
+- The final Google Maps native setup values for Android and iOS client manifests.
+
+## Supabase
+
+SQL migrations live under `supabase/migrations/`. Apply the schema first, then the seed file if you want the demo locations.
+
+## Run
+
+```powershell
+flutter pub get
+flutter run
+```

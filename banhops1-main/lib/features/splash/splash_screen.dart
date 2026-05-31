@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../core/localization/app_localizations.dart';
-import '../../core/theme/app_theme.dart';
 
 class SplashScreen extends StatefulWidget {
-  final Function(BuildContext)? onFinish;
+  const SplashScreen({super.key, required this.onFinish});
 
-  const SplashScreen({super.key, this.onFinish});
+  final void Function(BuildContext context) onFinish;
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -15,84 +13,51 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    if (widget.onFinish != null) {
-      Future.delayed(const Duration(seconds: 2), () {
-        if (mounted) {
-          widget.onFinish?.call(context);
-        }
-      });
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await Future<void>.delayed(const Duration(milliseconds: 1400));
+      if (mounted) {
+        widget.onFinish(context);
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    try {
-      final l10n = AppLocalizations.of(context);
-      return Scaffold(
-        body: Container(
-          width: double.infinity,
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [AppTheme.primaryColor, Color(0xFF5EA1F7)],
-            ),
+    return Scaffold(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF0F4C81), Color(0xFF1B998B)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
+        ),
+        child: Center(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.location_on, size: 90, color: Colors.white),
-              const SizedBox(height: 20),
-              Text(
-                l10n.translate('splash_title'),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 34,
-                  fontWeight: FontWeight.bold,
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.14),
+                  shape: BoxShape.circle,
                 ),
+                child: const Icon(Icons.directions_bus_filled_rounded, size: 54, color: Colors.white),
               ),
-              const SizedBox(height: 10),
-              Text(
-                l10n.translate('splash_subtitle'),
-                style: const TextStyle(color: Colors.white70, fontSize: 16),
-              ),
-            ],
-          ),
-        ),
-      );
-    } catch (e) {
-      return Scaffold(
-        body: Container(
-          width: double.infinity,
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [AppTheme.primaryColor, Color(0xFF5EA1F7)],
-            ),
-          ),
-          child: const Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.location_on, size: 90, color: Colors.white),
-              SizedBox(height: 20),
-              Text(
+              const SizedBox(height: 18),
+              const Text(
                 'BanHops',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 34,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w800),
               ),
-              SizedBox(height: 10),
-              Text(
-                'Fast routes for smart travel',
-                style: TextStyle(color: Colors.white70, fontSize: 16),
+              const SizedBox(height: 8),
+              const Text(
+                'Banha Smart Transport Guide',
+                style: TextStyle(color: Colors.white70, fontSize: 15),
               ),
             ],
           ),
         ),
-      );
-    }
+      ),
+    );
   }
 }
