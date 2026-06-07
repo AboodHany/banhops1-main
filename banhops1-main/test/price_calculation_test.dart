@@ -136,7 +136,7 @@ void main() {
 
     final trainRoutes = result.routes.where((r) => r.mode == TransitMode.train).toList();
     expect(trainRoutes.isNotEmpty, true);
-    expect(trainRoutes.any((r) => r.title.contains('944') && r.estimatedCost == 10.0), true);
+    expect(trainRoutes.any((r) => r.title.contains('Egypt Railway Train') && r.estimatedCost == 10.0), true);
   });
 
   test('Border governorate bus routing test for Arish -> Benha & Hurghada -> Benha', () {
@@ -527,7 +527,7 @@ void main() {
 
     // Expecting 3 routes: Metro Line 1 (via El-Marg) + Metro Line 2 (via Shubra) + Train from Ramses
     expect(shohadaaResult.routes.length, 3);
-    expect(shohadaaResult.routes.any((r) => r.mode == TransitMode.train && r.title.contains('901')), true);
+    expect(shohadaaResult.routes.any((r) => r.mode == TransitMode.train && r.title.contains('Ramses')), true);
     expect(shohadaaResult.routes.any((r) => r.id.contains('metro-l1-marg-microbus')), true);
     expect(shohadaaResult.routes.any((r) => r.id.contains('metro-l2-shubra-microbus')), true);
 
@@ -544,7 +544,7 @@ void main() {
     }
 
     // Expecting at least 2 routes: Train + Direct/Fallback Microbus
-    expect(helmyResult.routes.any((r) => r.mode == TransitMode.train && r.title.contains('901')), true);
+    expect(helmyResult.routes.any((r) => r.mode == TransitMode.train && (r.title.contains('Ramses') || r.title.contains('Cairo'))), true);
     expect(helmyResult.routes.any((r) => r.mode == TransitMode.microbus), true);
   });
 

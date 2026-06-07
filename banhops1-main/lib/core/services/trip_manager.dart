@@ -122,7 +122,7 @@ class TripManager {
     'Shiblanga': 'شبلنجة',
 
     // Benha Destinations
-    'Benha Main Bus Terminal': 'موقف بنها العمومي الجديد',
+    'Benha Main Bus Terminal': 'موقف بنها',
     'Benha Train Station': 'محطة قطار بنها',
     'Faculty of Engineering': 'كلية الهندسة',
     'Faculty of Medicine': 'كلية الطب',
@@ -444,8 +444,8 @@ class TripManager {
             : '${baseRoute.title} + Internal Suzuki';
 
         final newDetails = localeCode == 'ar'
-            ? '${baseRoute.details}\nثم سوزوكي داخلي من موقف بنها إلى $destName (الأجرة: 5 جنيه).'
-            : '${baseRoute.details}\nThen internal Suzuki from Benha Terminal to $destName (Fare: 5 EGP).';
+            ? '${baseRoute.details}\nثم سوزوكي داخلي من موقف بنها إلى $destName (الأجرة الرسمية: 5 جنيه).'
+            : '${baseRoute.details}\nThen internal Suzuki from Benha Terminal to $destName (Official Fare: 5 EGP).';
 
         return TransitRouteOption(
           id: '${baseRoute.id}-suzuki',
@@ -473,8 +473,8 @@ class TripManager {
             : 'Internal Suzuki + ${baseRoute.title}';
 
         final newDetails = localeCode == 'ar'
-            ? 'ابدأ بركوب سوزوكي داخلي من $originName إلى موقف بنها (الأجرة: 5 جنيه)، ثم ${baseRoute.details}'
-            : 'Start by taking internal Suzuki from $originName to Benha Terminal (Fare: 5 EGP), then ${baseRoute.details}';
+            ? 'ابدأ بركوب سوزوكي داخلي من $originName إلى موقف بنها (الأجرة الرسمية: 5 جنيه)، ثم ${baseRoute.details}'
+            : 'Start by taking internal Suzuki from $originName to Benha Terminal (Official Fare: 5 EGP), then ${baseRoute.details}';
 
         return TransitRouteOption(
           id: '${baseRoute.id}-suzuki',
@@ -505,8 +505,8 @@ class TripManager {
             : '${baseRoute.title} + Internal Suzuki';
 
         final newDetails = localeCode == 'ar'
-            ? '${baseRoute.details}\nثم سوزوكي داخلي من موقف بنها إلى $destName (الأجرة: 5 جنيه).'
-            : '${baseRoute.details}\nThen internal Suzuki from Benha Terminal to $destName (Fare: 5 EGP).';
+            ? '${baseRoute.details}\nثم سوزوكي داخلي من موقف بنها إلى $destName (الأجرة الرسمية: 5 جنيه).'
+            : '${baseRoute.details}\nThen internal Suzuki from Benha Terminal to $destName (Official Fare: 5 EGP).';
 
         return TransitRouteOption(
           id: '${baseRoute.id}-suzuki',
@@ -537,8 +537,8 @@ class TripManager {
             : 'Internal Suzuki + ${baseRoute.title}';
 
         final newDetails = localeCode == 'ar'
-            ? 'ابدأ بركوب سوزوكي داخلي من $originName إلى موقف بنها (الأجرة: 5 جنيه)، ثم ${baseRoute.details}'
-            : 'Start by taking internal Suzuki from $originName to Benha Terminal (Fare: 5 EGP), then ${baseRoute.details}';
+            ? 'ابدأ بركوب سوزوكي داخلي من $originName إلى موقف بنها (الأجرة الرسمية: 5 جنيه)، ثم ${baseRoute.details}'
+            : 'Start by taking internal Suzuki from $originName to Benha Terminal (Official Fare: 5 EGP), then ${baseRoute.details}';
 
         return TransitRouteOption(
           id: '${baseRoute.id}-suzuki',
@@ -691,22 +691,20 @@ class TripManager {
     if (id == 609) {
       final activeTrains = trains.isNotEmpty ? trains : _allHardcodedTrains();
       final cairoTrains = activeTrains.where((t) => t['origin'] == 'القاهرة' || t['origin_en'] == 'Cairo').toList();
-      for (final t in cairoTrains) {
-        final trType = localeCode == 'ar' ? (t['type'] ?? '') : (t['type_en'] ?? t['type'] ?? '');
-        final trNo = t['train_no'];
+      if (cairoTrains.isNotEmpty) {
         options.add(TransitRouteOption(
-          id: 'train-cairo-shohadaa-$trNo',
+          id: 'train-cairo-shohadaa-representative',
           title: localeCode == 'ar'
-              ? 'قطار رقم $trNo ($trType) من رمسيس'
-              : 'Train #$trNo ($trType) from Ramses',
+              ? 'قطار سكك حديد مصر (من رمسيس)'
+              : 'Egypt Railway Train (from Ramses)',
           mode: TransitMode.train,
-          durationMinutes: t['duration'] as int? ?? 35,
-          estimatedCost: (t['price'] as num?)?.toDouble() ?? 0.0,
+          durationMinutes: 35,
+          estimatedCost: 35.0, // median fare
           transfers: 0,
           rating: 4.7,
           details: localeCode == 'ar'
-              ? 'قطار مباشر من محطة رمسيس (بجوار محطة الشهداء) إلى محطة قطار بنها. الأجرة الرسمية: ${t['price']} جنيه.'
-              : 'Direct train from Ramses Station (next to Al-Shohadaa) to Benha Train Station. Official Fare: ${t['price']} EGP.',
+              ? 'قطار مباشر من محطة رمسيس (بجوار محطة الشهداء) إلى محطة قطار بنها. تتوفر رحلات متعددة يومياً بأسعار تتراوح بين 20 إلى 70 جنيه حسب الدرجة (مثل قطار 901، 911، 2025 تالجو). لمشاهدة جميع القطارات والمواعيد المتاحة والاستعلام المباشر، يرجى الضغط على أزرار الاستعلام بالأسفل.'
+              : 'Direct train from Ramses Station (next to Al-Shohadaa) to Benha Train Station. Multiple trips daily with fares between 20 and 70 EGP (e.g. Train #901, #911, #2025 Talgo). Click the schedule inquiry buttons below to see details.',
           gmapsUrl: _googleMapsUrl(origin, destination),
           score: 0,
           isRecommended: false,
@@ -732,8 +730,8 @@ class TripManager {
           transfers: 1,
           rating: 4.3,
           details: localeCode == 'ar'
-              ? 'استقل الخط الأول للمترو من ${_translate(targetName, 'ar')} إلى محطة المرج (عدد المحطات: $stationsB، الأجرة: ${metroFareB.toStringAsFixed(0)} جنيه)، ثم استقل ميكروباص من موقف المرج إلى موقف بنها (الأجرة: 28 جنيه).'
-              : 'Take Metro Line 1 from $targetName to El-Marg Station ($stationsB stations, Fare: ${metroFareB.toStringAsFixed(0)} EGP), then take a microbus from El-Marg to Benha Terminal (Fare: 28 EGP).',
+              ? 'استقل الخط الأول للمترو من ${_translate(targetName, 'ar')} إلى المرج (عدد المحطات: $stationsB، الأجرة الرسمية: ${metroFareB.toStringAsFixed(0)} جنيه)، ثم استقل ميكروباص إلى موقف بنها (الأجرة الرسمية: 28 جنيه).'
+              : 'Take Metro Line 1 from $targetName to El-Marg ($stationsB stations, Official Fare: ${metroFareB.toStringAsFixed(0)} EGP), then take a microbus to Benha Terminal (Official Fare: 28 EGP).',
           gmapsUrl: _googleMapsUrl(origin, destination),
           score: 0,
           isRecommended: false,
@@ -759,8 +757,8 @@ class TripManager {
           transfers: 1,
           rating: 4.5,
           details: localeCode == 'ar'
-              ? 'استقل الخط الثاني للمترو من ${_translate(targetName, 'ar')} إلى محطة شبرا الخيمة (عدد المحطات: $stationsA، الأجرة: ${metroFareA.toStringAsFixed(0)} جنيه)، ثم استقل ميكروباص إلى موقف بنها (الأجرة: 22 جنيه).'
-              : 'Take Metro Line 2 from $targetName to Shubra El-Kheima Station ($stationsA stations, Fare: ${metroFareA.toStringAsFixed(0)} EGP), then take a microbus to Benha Terminal (Fare: 22 EGP).',
+              ? 'استقل الخط الثاني للمترو من ${_translate(targetName, 'ar')} إلى محطة مترو مؤسسة (عدد المحطات: $stationsA، الأجرة الرسمية: ${metroFareA.toStringAsFixed(0)} جنيه)، ثم استقل ميكروباص إلى موقف بنها (الأجرة الرسمية: 22 جنيه).'
+              : 'Take Metro Line 2 from $targetName to Shubra El-Kheima (Al-Moassasa) ($stationsA stations, Official Fare: ${metroFareA.toStringAsFixed(0)} EGP), then take a microbus to Benha Terminal (Official Fare: 22 EGP).',
           gmapsUrl: _googleMapsUrl(origin, destination),
           score: 0,
           isRecommended: false,
@@ -786,8 +784,8 @@ class TripManager {
           transfers: 1,
           rating: 4.4,
           details: localeCode == 'ar'
-              ? 'استقل الخط الثالث للمترو من ${_translate(targetName, 'ar')} إلى موقف عدلي منصور (عدد المحطات: $stations، الأجرة: ${metroFare.toStringAsFixed(0)} جنيه)، ثم استقل ميكروباص إلى موقف بنها (الأجرة: 28 جنيه).'
-              : 'Take Metro Line 3 from $targetName to Adly Mansour Terminal ($stations stations, Fare: ${metroFare.toStringAsFixed(0)} EGP), then take a microbus to Benha Terminal (Fare: 28 EGP).',
+              ? 'استقل الخط الثالث للمترو من ${_translate(targetName, 'ar')} إلى محطة عدلي منصور (عدد المحطات: $stations، الأجرة الرسمية: ${metroFare.toStringAsFixed(0)} جنيه)، ثم التمشية الي موقف السلام خلف محطة المترو واستقلال ميكروباص إلى موقف بنها (الأجرة الرسمية: 28 جنيه).'
+              : 'Take Metro Line 3 from $targetName to Adly Mansour Station ($stations stations, Official Fare: ${metroFare.toStringAsFixed(0)} EGP), then walk to El-Salam Bus Station behind the metro station and take a microbus to Benha Terminal (Official Fare: 28 EGP).',
           gmapsUrl: _googleMapsUrl(origin, destination),
           score: 0,
           isRecommended: false,
@@ -810,8 +808,8 @@ class TripManager {
           transfers: 1,
           rating: 4.5,
           details: localeCode == 'ar'
-              ? 'استقل القطار الكهربائي الخفيف (LRT) من ${_translate(targetName, 'ar')} إلى محطة عدلي منصور (عدد المحطات: $originIndex، الأجرة: ${lrtFare.toStringAsFixed(0)} جنيه)، ثم انتقل إلى ميكروباص إلى موقف بنها (الأجرة: 28 جنيه).'
-              : 'Take the Light Rail Transit (LRT) from $targetName to Adly Mansour Station ($originIndex stations, Fare: ${lrtFare.toStringAsFixed(0)} EGP), then transfer to a microbus to Benha Terminal (Fare: 28 EGP).',
+              ? 'استقل القطار الكهربائي الخفيف (LRT) من ${_translate(targetName, 'ar')} إلى محطة عدلي منصور (عدد المحطات: $originIndex، الأجرة الرسمية: ${lrtFare.toStringAsFixed(0)} جنيه)، ثم التمشية الي موقف السلام خلف محطة المترو واستقلال ميكروباص إلى موقف بنها (الأجرة الرسمية: 28 جنيه).'
+              : 'Take the Light Rail Transit (LRT) from $targetName to Adly Mansour Station ($originIndex stations, Official Fare: ${lrtFare.toStringAsFixed(0)} EGP), then walk to El-Salam Bus Station behind the metro station and transfer to a microbus to Benha Terminal (Official Fare: 28 EGP).',
           gmapsUrl: _googleMapsUrl(origin, destination),
           score: 0,
           isRecommended: false,
@@ -834,8 +832,8 @@ class TripManager {
         transfers: 2,
         rating: 4.4,
         details: localeCode == 'ar'
-            ? 'استقل مونوريل شرق النيل من ${_translate(targetName, 'ar')} إلى محطة الإستاد (عدد المحطات: $originIndex، الأجرة: ${monorailFare.toStringAsFixed(0)} جنيه)، ثم انتقل إلى الخط الثالث للمترو إلى عدلي منصور (الأجرة: 12 جنيه)، ثم ميكروباص إلى موقف بنها (الأجرة: 28 جنيه).'
-            : 'Take Monorail East from $targetName to El-Estad ($originIndex stations, Fare: ${monorailFare.toStringAsFixed(0)} EGP), transfer to Metro Line 3 to Adly Mansour (Fare: 12 EGP), then take a microbus to Benha Terminal (Fare: 28 EGP).',
+            ? 'استقل مونوريل شرق النيل من ${_translate(targetName, 'ar')} إلى محطة الإستاد (عدد المحطات: $originIndex، الأجرة الرسمية: ${monorailFare.toStringAsFixed(0)} جنيه)، ثم انتقل إلى الخط الثالث للمترو إلى محطة عدلي منصور (الأجرة الرسمية: 12 جنيه)، ثم التمشية الي موقف السلام خلف محطة المترو واستقلال ميكروباص إلى موقف بنها (الأجرة الرسمية: 28 جنيه).'
+            : 'Take Monorail East from $targetName to El-Estad ($originIndex stations, Official Fare: ${monorailFare.toStringAsFixed(0)} EGP), transfer to Metro Line 3 to Adly Mansour Station (Official Fare: 12 EGP), then walk to El-Salam Bus Station behind the metro station and take a microbus to Benha Terminal (Official Fare: 28 EGP).',
         gmapsUrl: _googleMapsUrl(origin, destination),
         score: 0,
         isRecommended: false,
@@ -857,8 +855,8 @@ class TripManager {
         transfers: 2,
         rating: 4.3,
         details: localeCode == 'ar'
-            ? 'استقل مونوريل غرب النيل من ${_translate(targetName, 'ar')} إلى محطة وادي النيل (عدد المحطات: $originIndex، الأجرة: ${monorailFare.toStringAsFixed(0)} جنيه)، ثم انتقل إلى الخط الثالث للمترو إلى عدلي منصور (الأجرة: 20 جنيه)، ثم ميكروباص إلى موقف بنها (الأجرة: 28 جنيه).'
-            : 'Take Monorail West from $targetName to Wadi El-Nile ($originIndex stations, Fare: ${monorailFare.toStringAsFixed(0)} EGP), transfer to Metro Line 3 to Adly Mansour (Fare: 20 EGP), then take a microbus to Benha Terminal (Fare: 28 EGP).',
+            ? 'استقل مونوريل غرب النيل من ${_translate(targetName, 'ar')} إلى محطة وادي النيل (عدد المحطات: $originIndex، الأجرة الرسمية: ${monorailFare.toStringAsFixed(0)} جنيه)، ثم انتقل إلى الخط الثالث للمترو إلى محطة عدلي منصور (الأجرة الرسمية: 20 جنيه)، ثم التمشية الي موقف السلام خلف محطة المترو واستقلال ميكروباص إلى موقف بنها (الأجرة الرسمية: 28 جنيه).'
+            : 'Take Monorail West from $targetName to Wadi El-Nile ($originIndex stations, Official Fare: ${monorailFare.toStringAsFixed(0)} EGP), transfer to Metro Line 3 to Adly Mansour Station (Official Fare: 20 EGP), then walk to El-Salam Bus Station behind the metro station and take a microbus to Benha Terminal (Official Fare: 28 EGP).',
         gmapsUrl: _googleMapsUrl(origin, destination),
         score: 0,
         isRecommended: false,
@@ -941,30 +939,39 @@ class TripManager {
 
     // 1. Add specific trains if origin supports direct rail
     if (matchedTrains.isNotEmpty) {
-      for (final t in matchedTrains) {
-        final trType = localeCode == 'ar' ? (t['type'] ?? '') : (t['type_en'] ?? t['type'] ?? '');
-        final trNo = t['train_no'];
-        final title = localeCode == 'ar'
-            ? 'قطار رقم $trNo ($trType)'
-            : 'Train #$trNo ($trType)';
-        final details = localeCode == 'ar'
-            ? 'قطار من ${t['origin']} إلى محطة قطار بنها. الأجرة الرسمية: ${t['price']} جنيه. يرجى الاستعلام عن المواعيد اليومية عبر الموقع الرسمي.'
-            : 'Train from ${t['origin_en'] ?? t['origin']} to Benha Train Station. Official Fare: ${t['price']} EGP. Please check the official website for daily schedules.';
+      final representative = matchedTrains.first;
+      final tOrigin = representative['origin_en'] ?? representative['origin'];
+      final tOriginAr = representative['origin'] ?? representative['origin_en'];
+      
+      final prices = matchedTrains.map((t) => (t['price'] as num?)?.toDouble() ?? 0.0).toList();
+      final durations = matchedTrains.map((t) => t['duration'] as int? ?? 35).toList();
+      final minPrice = prices.reduce((a, b) => a < b ? a : b);
+      final maxPrice = prices.reduce((a, b) => a > b ? a : b);
+      final avgDuration = (durations.reduce((a, b) => a + b) / durations.length).round();
 
-        routes.add(TransitRouteOption(
-          id: 'train-${t['origin_en'] ?? t['origin']}-$trNo',
-          title: title,
-          mode: TransitMode.train,
-          durationMinutes: t['duration'] as int? ?? 35,
-          estimatedCost: (t['price'] as num?)?.toDouble() ?? 0.0,
-          transfers: 0,
-          rating: 4.7,
-          details: details,
-          gmapsUrl: _googleMapsUrl(origin, destination),
-          score: 0,
-          isRecommended: false,
-        ));
-      }
+      final trainListString = matchedTrains.map((t) => '#${t['train_no']}').join(', ');
+      
+      final title = localeCode == 'ar'
+          ? 'قطار سكك حديد مصر (من $tOriginAr)'
+          : 'Egypt Railway Train (from $tOrigin)';
+          
+      final details = localeCode == 'ar'
+          ? 'قطار مباشر من $tOriginAr إلى محطة قطار بنها. تتوفر رحلات متعددة يومياً (مثل قطار $trainListString). الأجرة تتراوح بين ${minPrice.toStringAsFixed(0)} إلى ${maxPrice.toStringAsFixed(0)} جنيه حسب درجة القطار. لمشاهدة جميع القطارات والمواعيد المتاحة والاستعلام المباشر، يرجى الضغط على أزرار الاستعلام بالأسفل.'
+          : 'Direct train from $tOrigin to Benha Train Station. Multiple trips are available daily (e.g. Train $trainListString). Fare ranges from ${minPrice.toStringAsFixed(0)} to ${maxPrice.toStringAsFixed(0)} EGP depending on class. Click the schedule inquiry buttons below to see details.';
+
+      routes.add(TransitRouteOption(
+        id: 'train-${tOrigin.toString().replaceAll(' ', '-')}-representative',
+        title: title,
+        mode: TransitMode.train,
+        durationMinutes: avgDuration,
+        estimatedCost: minPrice,
+        transfers: 0,
+        rating: 4.7,
+        details: details,
+        gmapsUrl: _googleMapsUrl(origin, destination),
+        score: 0,
+        isRecommended: false,
+      ));
     } else {
       // Check if it's a far governorate to suggest combined train route via Ramses Cairo
       final isFar = [
@@ -1009,8 +1016,8 @@ class TripManager {
           transfers: 0,
           rating: 4.8,
           details: localeCode == 'ar'
-              ? 'أتوبيس MCV مكيف مباشر من موقف العريش إلى موقف بنها العمومي. شاشات عرض، رحلة مريحة.'
-              : 'Direct modern AC MCV coach from Arish terminal to Benha Main Bus Terminal. Media screens, comfortable journey.',
+              ? 'أتوبيس MCV مكيف مباشر من موقف العريش إلى موقف بنها. شاشات عرض، رحلة مريحة.'
+              : 'Direct modern AC MCV coach from Arish terminal to Benha Terminal. Media screens, comfortable journey.',
           gmapsUrl: _googleMapsUrl(origin, destination),
           score: 0,
           isRecommended: false,
@@ -1171,8 +1178,8 @@ class TripManager {
         final title = localeCode == 'ar' ? 'ميكروباص مباشر' : 'Direct Microbus';
         final fallbackFare = _getFallbackMicrobusFare(origin);
         final details = localeCode == 'ar'
-            ? 'ميكروباص مباشر من مواقف السيارات المحلية. الأجرة التقريبية: ${fallbackFare.toStringAsFixed(1)} جنيه.'
-            : 'Direct microbus from local terminal hubs. Est. Fare: ${fallbackFare.toStringAsFixed(1)} EGP.';
+            ? 'ميكروباص مباشر من مواقف السيارات المحلية. الأجرة الرسمية: ${fallbackFare.toStringAsFixed(1)} جنيه.'
+            : 'Direct microbus from local terminal hubs. Official Fare: ${fallbackFare.toStringAsFixed(1)} EGP.';
 
         routes.add(TransitRouteOption(
           id: 'microbus-${origin.id}-${destination.id}',

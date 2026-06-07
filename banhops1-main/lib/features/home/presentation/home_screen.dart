@@ -262,34 +262,24 @@ class _SearchCard extends StatelessWidget {
               },
             ),
             const SizedBox(height: 14),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: planner.swapEndpoints,
-                    icon: const Icon(Icons.swap_vert_rounded),
-                    label: Text(localization.translate('swap')),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      planner.planTrip(localeCode: localization.locale.languageCode);
-                      Navigator.of(context).pushNamed(
-                        AppRoutes.routeResults,
-                        arguments: {
-                          'originLabel': localization.translateLocation(planner.selectedOriginCity.name),
-                          'destinationLabel': localization.translateLocation(planner.selectedBenhaDestination.name),
-                          'origin': planner.selectedOriginCity,
-                          'destination': planner.selectedBenhaDestination,
-                        },
-                      );
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: () {
+                  planner.planTrip(localeCode: localization.locale.languageCode);
+                  Navigator.of(context).pushNamed(
+                    AppRoutes.routeResults,
+                    arguments: {
+                      'originLabel': localization.translateLocation(planner.selectedOriginCity.name),
+                      'destinationLabel': localization.translateLocation(planner.selectedBenhaDestination.name),
+                      'origin': planner.selectedOriginCity,
+                      'destination': planner.selectedBenhaDestination,
                     },
-                    child: Text(localization.translate('get_routes')),
-                  ),
-                ),
-              ],
+                  );
+                },
+                child: Text(localization.translate('get_routes')),
+              ),
             ),
             if (planner.latestPlan != null) ...[
               const SizedBox(height: 14),
