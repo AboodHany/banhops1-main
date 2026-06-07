@@ -94,88 +94,261 @@ class TripDetailsScreen extends StatelessWidget {
   List<String> _getTransferLocations(String routeId, String localeCode, int transfers) {
     if (transfers < 1) return const [];
     final isAr = localeCode == 'ar';
+    final List<String> locs = [];
 
     if (routeId.contains('monorail-east-metro-microbus')) {
-      return isAr 
+      locs.addAll(isAr 
           ? ['محطة الإستاد (المونوريل)', 'التمشية الي موقف السلام خلف محطة المترو']
-          : ['El-Estad (Monorail)', 'Walk to El-Salam Bus Station behind Metro Station'];
-    }
-    if (routeId.contains('monorail-west-metro-microbus')) {
-      return isAr 
+          : ['El-Estad (Monorail)', 'Walk to El-Salam Bus Station behind Metro Station']);
+    } else if (routeId.contains('monorail-west-metro-microbus')) {
+      locs.addAll(isAr 
           ? ['محطة وادي النيل (المونوريل)', 'التمشية الي موقف السلام خلف محطة المترو']
-          : ['Wadi El-Nile (Monorail)', 'Walk to El-Salam Bus Station behind Metro Station'];
-    }
-    if (routeId.contains('monorail-metro-train')) {
-      return isAr 
+          : ['Wadi El-Nile (Monorail)', 'Walk to El-Salam Bus Station behind Metro Station']);
+    } else if (routeId.contains('monorail-metro-train')) {
+      locs.addAll(isAr 
           ? ['محطة الربط (المونوريل)', 'محطة رمسيس (الشهداء)']
-          : ['Monorail Interchange', 'Ramses (Al-Shohadaa) Station'];
-    }
-    if (routeId.contains('metro-l1-marg-microbus')) {
-      return isAr ? ['المرج'] : ['El-Marg'];
-    }
-    if (routeId.contains('metro-l2-shubra-microbus')) {
-      return isAr ? ['محطة مترو مؤسسة'] : ['Shubra El-Khaimah (Al-Moassasa)'];
-    }
-    if (routeId.contains('metro-l3-adly-microbus') || routeId.contains('lrt-adly-microbus')) {
-      return isAr ? ['التمشية الي موقف السلام خلف محطة المترو'] : ['Walk to El-Salam Bus Station behind Metro Station'];
+          : ['Monorail Interchange', 'Ramses (Al-Shohadaa) Station']);
+    } else if (routeId.contains('metro-l1-marg-microbus')) {
+      locs.add(isAr ? 'المرج' : 'El-Marg');
+    } else if (routeId.contains('metro-l2-shubra-microbus')) {
+      locs.add(isAr ? 'محطة مترو مؤسسة' : 'Shubra El-Khaimah (Al-Moassasa)');
+    } else if (routeId.contains('metro-l3-adly-microbus') || routeId.contains('lrt-adly-microbus')) {
+      locs.add(isAr ? 'التمشية الي موقف السلام خلف محطة المترو' : 'Walk to El-Salam Bus Station behind Metro Station');
+    } else if (routeId.contains('train-combined')) {
+      locs.add(isAr ? 'محطة رمسيس بالقاهرة' : 'Ramses Train Station, Cairo');
+    } else if (routeId.contains('border-eastdelta-combined')) {
+      locs.add(isAr ? 'المرج' : 'El-Marg');
+    } else if (routeId.contains('border-gobus-classic') || routeId.contains('border-superjet-sharm')) {
+      locs.add(isAr ? 'موقف أحمد حلمي بالقاهرة' : 'Ahmed Helmy Hub, Cairo');
+    } else if (routeId.contains('border-october-kharga')) {
+      locs.add(isAr ? 'موقف الحصري بـ 6 أكتوبر' : 'El-Hosary Hub, 6th of October');
     }
 
     if (routeId.contains('-suzuki')) {
-      return isAr ? ['موقف بنها'] : ['Benha'];
-    }
-    if (routeId.contains('train-combined')) {
-      return isAr ? ['محطة رمسيس بالقاهرة'] : ['Ramses Train Station, Cairo'];
-    }
-    if (routeId.contains('border-eastdelta-combined')) {
-      return isAr ? ['المرج'] : ['El-Marg'];
-    }
-    if (routeId.contains('border-gobus-classic') || routeId.contains('border-superjet-sharm')) {
-      return isAr ? ['موقف أحمد حلمي بالقاهرة'] : ['Ahmed Helmy Hub, Cairo'];
-    }
-    if (routeId.contains('border-october-kharga')) {
-      return isAr ? ['موقف الحصري بـ 6 أكتوبر'] : ['El-Hosary Hub, 6th of October'];
+      locs.add(isAr ? 'موقف بنها' : 'Benha Terminal');
     }
 
-    return isAr ? ['محطة تحويل وسطى بالقاهرة'] : ['Cairo Transfer Hub'];
+    if (locs.isEmpty && transfers >= 1) {
+      locs.add(isAr ? 'محطة تحويل وسطى بالقاهرة' : 'Cairo Transfer Hub');
+    }
+
+    return locs;
   }
 
-  String _getRealGuidance(TransitRouteOption route, String origin, String destination, String localeCode) {
+  List<String> _getLegTransportationModes(String routeId, TransitMode primaryMode, int transfers, String localeCode) {
     final isAr = localeCode == 'ar';
-    if (route.mode == TransitMode.train || route.id.contains('train-combined')) {
-      if (isAr) {
-        return '1. توجه إلى محطة القطار في $origin.\n'
-            '2. اقطع تذكرة إلى محطة بنها (أو تذكرة قطار رمسيس ثم تحويل لقطار بنها إذا لم يكن هناك قطار مباشر).\n'
-            '3. اركب القطار المتجه شمالاً نحو الدلتا، ورحلتك ستستغرق حوالي ${route.durationMinutes} دقيقة.\n'
-            '4. عند الوصول لمحطة قطار بنها، اخرج من المحطة وتوجه إلى موقف السرفيس الداخلي للوصول إلى وجهتك النهائية ($destination).';
+    final List<String> modes = [];
+
+    if (transfers == 0) {
+      if (primaryMode == TransitMode.train) {
+        modes.add(isAr ? 'قطار' : 'Train');
+      } else if (primaryMode == TransitMode.microbus) {
+        modes.add(isAr ? 'ميكروباص مباشر' : 'Direct Microbus');
       } else {
-        return '1. Head to the train station in $origin.\n'
-            '2. Book a ticket to Benha (or to Cairo Ramses then transfer to Benha if no direct train is available).\n'
-            '3. Board the train heading north towards the Delta; your journey will take approximately ${route.durationMinutes} minutes.\n'
-            '4. Upon arriving at Benha Train Station, exit and take a local microbus/taxi to reach your final destination ($destination).';
+        modes.add(isAr ? 'أتوبيس' : 'Bus');
       }
-    } else if (route.mode == TransitMode.microbus) {
-      if (isAr) {
-        return '1. اذهب إلى موقف الميكروباصات الرئيسي في $origin.\n'
-            '2. ابحث عن سيارات ميكروباص متجهة مباشرة إلى "موقف بنها".\n'
-            '3. الأجرة الرسمية هي ${route.estimatedCost} جنيه مصري.\n'
-            '4. بعد الوصول لموقف بنها، استقل سرفيس داخلي (خط المحطة أو خط الفلل أو الجامعة) للوصول إلى $destination.';
-      } else {
-        return '1. Head to the main microbus terminal in $origin.\n'
-            '2. Find the microbus service heading directly to "Benha Terminal".\n'
-            '3. The official fare is ${route.estimatedCost} EGP.\n'
-            '4. After arriving at Benha Terminal, take a local transit microbus (University line, Villas line, or Station line) to reach $destination.';
+      return modes;
+    }
+
+    if (routeId.contains('monorail-east-metro-microbus')) {
+      modes.addAll(isAr 
+          ? ['مونوريل شرق النيل', 'مترو الخط الثالث', 'ميكروباص']
+          : ['Monorail East', 'Metro Line 3', 'Microbus']);
+    } else if (routeId.contains('monorail-west-metro-microbus')) {
+      modes.addAll(isAr 
+          ? ['مونوريل غرب النيل', 'مترو الخط الثالث', 'ميكروباص']
+          : ['Monorail West', 'Metro Line 3', 'Microbus']);
+    } else if (routeId.contains('monorail-metro-train')) {
+      modes.addAll(isAr 
+          ? ['مونوريل', 'مترو', 'قطار رمسيس']
+          : ['Monorail', 'Metro', 'Ramses Train']);
+    } else if (routeId.contains('metro-l1-marg-microbus')) {
+      modes.addAll(isAr 
+          ? ['مترو الخط الأول', 'ميكروباص']
+          : ['Metro Line 1', 'Microbus']);
+    } else if (routeId.contains('metro-l2-shubra-microbus') || routeId.contains('metro-l2-shubra-microbus-suzuki')) {
+      modes.addAll(isAr 
+          ? ['مترو الخط الثاني', 'ميكروباص']
+          : ['Metro Line 2', 'Microbus']);
+    } else if (routeId.contains('metro-l3-adly-microbus')) {
+      modes.addAll(isAr 
+          ? ['مترو الخط الثالث', 'ميكروباص']
+          : ['Metro Line 3', 'Microbus']);
+    } else if (routeId.contains('lrt-adly-microbus')) {
+      modes.addAll(isAr 
+          ? ['القطار الكهربائي (LRT)', 'ميكروباص']
+          : ['LRT Train', 'Microbus']);
+    } else if (routeId.contains('train-combined')) {
+      modes.addAll(isAr 
+          ? ['قطار الصعيد', 'قطار رمسيس - بنها']
+          : ['Upper Egypt Train', 'Cairo-Benha Train']);
+    } else if (routeId.contains('border-eastdelta-combined') || 
+               routeId.contains('border-gobus-classic') || 
+               routeId.contains('border-superjet-sharm') ||
+               routeId.contains('border-october-kharga')) {
+      modes.addAll(isAr 
+          ? ['أتوبيس السفر', 'ميكروباص']
+          : ['Travel Bus', 'Microbus']);
+    }
+
+    if (routeId.contains('-suzuki')) {
+      if (modes.isEmpty) {
+        modes.add(isAr ? 'ميكروباص مباشر' : 'Direct Microbus');
       }
+      modes.add(isAr ? 'سوزوكي داخلي' : 'Internal Suzuki');
+    }
+
+    final expectedSegments = transfers + 1;
+    while (modes.length < expectedSegments) {
+      modes.add(isAr ? 'مواصلة إضافية' : 'Connecting Ride');
+    }
+
+    return modes;
+  }
+
+  List<double> _getLegCosts(String routeId, double totalCost, int transfers) {
+    if (transfers == 0) {
+      return [totalCost];
+    }
+
+    final List<double> costs = [];
+    double remaining = totalCost;
+
+    bool hasSuzuki = routeId.contains('-suzuki');
+    if (hasSuzuki) {
+      remaining -= 5.0;
+    }
+
+    if (routeId.contains('monorail-east-metro-microbus') || routeId.contains('monorail-west-metro-microbus')) {
+      final microbus = 28.0;
+      final metro = 8.0;
+      final monorail = remaining - microbus - metro;
+      costs.addAll([monorail, metro, microbus]);
+    } else if (routeId.contains('monorail-metro-train')) {
+      final train = 35.0;
+      final metro = 8.0;
+      final monorail = remaining - train - metro;
+      costs.addAll([monorail, metro, train]);
+    } else if (routeId.contains('metro-l1-marg-microbus')) {
+      final microbus = 28.0;
+      final metro = remaining - microbus;
+      costs.addAll([metro, microbus]);
+    } else if (routeId.contains('metro-l2-shubra-microbus')) {
+      final microbus = 22.0;
+      final metro = remaining - microbus;
+      costs.addAll([metro, microbus]);
+    } else if (routeId.contains('metro-l3-adly-microbus') || routeId.contains('lrt-adly-microbus')) {
+      final microbus = 28.0;
+      final metro = remaining - microbus;
+      costs.addAll([metro, microbus]);
+    } else if (routeId.contains('train-combined')) {
+      final train2 = 35.0;
+      final train1 = remaining - train2;
+      costs.addAll([train1, train2]);
+    } else if (routeId.contains('border-eastdelta-combined')) {
+      final microbus = 28.0;
+      final travel = remaining - microbus;
+      costs.addAll([travel, microbus]);
+    } else if (routeId.contains('border-gobus-classic') || 
+               routeId.contains('border-superjet-sharm') ||
+               routeId.contains('border-highjet-hurghada') ||
+               routeId.contains('border-superjet-hurghada') ||
+               routeId.contains('border-upperegypt-kharga')) {
+      final microbus = 26.5;
+      final travel = remaining - microbus;
+      costs.addAll([travel, microbus]);
+    } else if (routeId.contains('border-ostaz-shubra')) {
+      final microbus = 21.5;
+      final travel = remaining - microbus;
+      costs.addAll([travel, microbus]);
+    } else if (routeId.contains('border-october-kharga')) {
+      final microbus = 60.0;
+      final travel = remaining - microbus;
+      costs.addAll([travel, microbus]);
     } else {
-      if (isAr) {
-        return '1. توجه إلى أقرب موقف أتوبيس عام في $origin.\n'
-            '2. اركب الأتوبيس المتجه إلى القاهرة/رمسيس، ثم انتقل لوسيلة مواصلات أخرى متجهة لبنها.\n'
-            '3. اتبع الإرشادات المرئية في الخريطة للوصول بأسرع وقت لـ $destination.';
-      } else {
-        return '1. Head to the nearest public bus terminal in $origin.\n'
-            '2. Take the bus heading to Cairo/Ramses, then transfer to a connecting service to Benha.\n'
-            '3. Follow the visual path on the map for the fastest route to $destination.';
+      final baseLegs = transfers - (hasSuzuki ? 1 : 0) + 1;
+      final avg = remaining / baseLegs;
+      for (int i = 0; i < baseLegs; i++) {
+        costs.add(avg);
       }
     }
+
+    if (hasSuzuki) {
+      costs.add(5.0);
+    }
+
+    final expectedSegments = transfers + 1;
+    while (costs.length < expectedSegments) {
+      costs.add(0.0);
+    }
+    if (costs.length > expectedSegments) {
+      costs.removeRange(expectedSegments, costs.length);
+    }
+
+    return costs;
+  }
+
+  String _getRealGuidance(TransitRouteOption route, String origin, List<String> transferLocs, String destination, String localeCode) {
+    final isAr = localeCode == 'ar';
+    final buffer = StringBuffer();
+    final legModes = _getLegTransportationModes(route.id, route.mode, route.transfers, localeCode);
+    final legCosts = _getLegCosts(route.id, route.estimatedCost, route.transfers);
+
+    if (transferLocs.isEmpty) {
+      if (route.mode == TransitMode.train) {
+        if (isAr) {
+          buffer.writeln('1. توجه إلى محطة القطار في $origin.');
+          buffer.writeln('2. اقطع تذكرة قطار مباشر إلى محطة قطار بنها بقيمة ${route.estimatedCost.toStringAsFixed(1).replaceAll('.0', '')} جنيه.');
+          buffer.writeln('3. اركب القطار المتجه إلى بنها (المدة حوالي ${route.durationMinutes} دقيقة).');
+        } else {
+          buffer.writeln('1. Head to the train station in $origin.');
+          buffer.writeln('2. Purchase a ticket directly to Benha Train Station for ${route.estimatedCost.toStringAsFixed(1).replaceAll('.0', '')} EGP.');
+          buffer.writeln('3. Board the train to Benha (duration is approximately ${route.durationMinutes} minutes).');
+        }
+      } else {
+        if (isAr) {
+          buffer.writeln('1. اذهب إلى موقف السيارات/الميكروباص الرئيسي في $origin.');
+          buffer.writeln('2. استقل ميكروباص مباشر متوجهاً إلى موقف بنها.');
+          buffer.writeln('3. الأجرة الرسمية هي ${route.estimatedCost.toStringAsFixed(1).replaceAll('.0', '')} جنيه مصري.');
+          buffer.writeln('4. عند الوصول لموقف بنها، تكون قد وصلت لوجهتك.');
+        } else {
+          buffer.writeln('1. Head to the main microbus/bus terminal in $origin.');
+          buffer.writeln('2. Board a direct microbus to Benha Terminal.');
+          buffer.writeln('3. The official fare is ${route.estimatedCost.toStringAsFixed(1).replaceAll('.0', '')} EGP.');
+          buffer.writeln('4. Upon arriving at Benha Terminal, you have reached your destination.');
+        }
+      }
+      return buffer.toString().trim();
+    }
+
+    int step = 1;
+    String currentPoint = origin;
+
+    for (int i = 0; i < transferLocs.length; i++) {
+      final nextPoint = transferLocs[i];
+      final mode = legModes[i];
+      final cost = legCosts[i];
+
+      if (isAr) {
+        buffer.writeln('$step. استقل ($mode) من $currentPoint متوجهاً إلى $nextPoint (الأجرة الرسمية: ${cost.toStringAsFixed(1).replaceAll('.0', '')} جنيه).');
+      } else {
+        buffer.writeln('$step. Take ($mode) from $currentPoint to $nextPoint (Official Fare: ${cost.toStringAsFixed(1).replaceAll('.0', '')} EGP).');
+      }
+      step++;
+      currentPoint = nextPoint;
+    }
+
+    final lastMode = legModes.last;
+    final lastCost = legCosts.last;
+    if (isAr) {
+      buffer.writeln('$step. استقل ($lastMode) من $currentPoint إلى وجهتك النهائية ($destination) (الأجرة الرسمية: ${lastCost.toStringAsFixed(1).replaceAll('.0', '')} جنيه).');
+      buffer.writeln('${step + 1}. الأجرة الرسمية الإجمالية لكافة المراحل هي ${route.estimatedCost.toStringAsFixed(1).replaceAll('.0', '')} جنيه مصري.');
+    } else {
+      buffer.writeln('$step. Take ($lastMode) from $currentPoint to your final destination ($destination) (Official Fare: ${lastCost.toStringAsFixed(1).replaceAll('.0', '')} EGP).');
+      buffer.writeln('${step + 1}. The total official fare for all legs is ${route.estimatedCost.toStringAsFixed(1).replaceAll('.0', '')} EGP.');
+    }
+
+    return buffer.toString().trim();
   }
 
   void _showTrainsSheet(BuildContext context, String origin, String localeCode) {
@@ -230,7 +403,6 @@ class TripDetailsScreen extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final train = trainsToShow[index];
                     final type = isAr ? train['type_ar'] : train['type_en'];
-                    final dest = isAr ? train['dest'] : train['dest_en'];
                     return Card(
                       margin: const EdgeInsets.only(bottom: 12),
                       elevation: 0,
@@ -372,23 +544,80 @@ class TripDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTimelineConnector(BuildContext context, Color color) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 17, right: 17),
-      child: Container(
-        width: 2.5,
-        height: 24,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              color,
-              color.withValues(alpha: 0.3),
-            ],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+  IconData _getModeIcon(String modeText) {
+    final t = modeText.toLowerCase();
+    if (t.contains('مترو') || t.contains('metro')) {
+      return Icons.subway_rounded;
+    }
+    if (t.contains('قطار') || t.contains('train') || t.contains('lrt') || t.contains('مونوريل') || t.contains('monorail')) {
+      return Icons.train_rounded;
+    }
+    if (t.contains('سوزوكي') || t.contains('suzuki')) {
+      return Icons.local_taxi_rounded;
+    }
+    if (t.contains('أتوبيس') || t.contains('bus')) {
+      return Icons.directions_bus_rounded;
+    }
+    return Icons.directions_bus_filled_rounded;
+  }
+
+  Widget _buildTimelineConnector(BuildContext context, Color color, String modeText, double cost) {
+    final localization = AppLocalizations.of(context);
+    final localeCode = localization.locale.languageCode;
+    final isAr = localeCode == 'ar';
+    final costText = isAr 
+        ? '${cost.toStringAsFixed(1).replaceAll('.0', '')} جنيه'
+        : '${cost.toStringAsFixed(1).replaceAll('.0', '')} EGP';
+
+    return Row(
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 17, right: 17),
+          child: Container(
+            width: 2.5,
+            height: 48,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  color,
+                  color.withValues(alpha: 0.3),
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
           ),
         ),
-      ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                _getModeIcon(modeText),
+                size: 14,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                '$modeText - $costText',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -397,7 +626,9 @@ class TripDetailsScreen extends StatelessWidget {
     final localization = AppLocalizations.of(context);
     final localeCode = localization.locale.languageCode;
     final transferLocs = _getTransferLocations(route.id, localeCode, route.transfers);
-    final realGuidance = _getRealGuidance(route, origin, destination, localeCode);
+    final legModes = _getLegTransportationModes(route.id, route.mode, route.transfers, localeCode);
+    final legCosts = _getLegCosts(route.id, route.estimatedCost, route.transfers);
+    final realGuidance = _getRealGuidance(route, origin, transferLocs, destination, localeCode);
 
     return Scaffold(
       appBar: AppBar(
@@ -575,6 +806,8 @@ class TripDetailsScreen extends StatelessWidget {
                             _buildTimelineConnector(
                               context, 
                               i == 0 ? const Color(0xFF0F4C81) : Colors.orange,
+                              legModes[i],
+                              legCosts[i],
                             ),
                             _buildTimelineNode(
                               context,
@@ -584,9 +817,19 @@ class TripDetailsScreen extends StatelessWidget {
                               name: transferLocs[i],
                             ),
                           ],
-                          _buildTimelineConnector(context, Colors.orange),
+                          _buildTimelineConnector(
+                            context,
+                            Colors.orange,
+                            legModes.last,
+                            legCosts.last,
+                          ),
                         ] else ...[
-                          _buildTimelineConnector(context, const Color(0xFF0F4C81)),
+                          _buildTimelineConnector(
+                            context,
+                            const Color(0xFF0F4C81),
+                            legModes.first,
+                            legCosts.first,
+                          ),
                         ],
                         _buildTimelineNode(
                           context,
