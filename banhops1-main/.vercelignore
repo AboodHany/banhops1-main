@@ -1,0 +1,11 @@
+# Ignore everything by default to speed up deployment
+*
+
+# Allow the build/web output directory
+!build/web
+!build/web/**
+
+# Allow vercel configuration files
+!vercel.json
+!.vercel
+!.vercel/**

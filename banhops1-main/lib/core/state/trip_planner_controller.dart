@@ -116,7 +116,7 @@ class TripPlannerController extends ChangeNotifier {
       localeCode: localeCode,
     );
     _saveTripToHistory();
-    notifyListeners();
+    Future.microtask(() => notifyListeners());
     return _latestPlan!;
   }
 

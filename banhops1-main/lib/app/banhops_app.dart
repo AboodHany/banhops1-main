@@ -53,6 +53,8 @@ class BanHopsApp extends StatelessWidget {
             debugShowCheckedModeBanner: false,
             locale: state.locale,
             theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: state.themeMode,
             localizationsDelegates: const [
               AppLocalizations.delegate,
               GlobalMaterialLocalizations.delegate,
