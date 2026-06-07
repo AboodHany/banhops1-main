@@ -341,7 +341,8 @@ class TripManager {
     List<Map<String, dynamic>> trains = const [],
     String localeCode = 'en',
   }) {
-    final alternatives = _buildAlternatives(origin, destination, microbuses, trains, localeCode);
+    final rawAlternatives = _buildAlternatives(origin, destination, microbuses, trains, localeCode);
+    final alternatives = rawAlternatives.where((route) => route.transfers <= 2).toList();
     
     // Safety check if alternatives list is empty
     if (alternatives.isEmpty) {
@@ -452,7 +453,7 @@ class TripManager {
           mode: baseRoute.mode,
           durationMinutes: baseRoute.durationMinutes + 15,
           estimatedCost: baseRoute.estimatedCost + 5.0,
-          transfers: baseRoute.transfers + 1,
+          transfers: baseRoute.transfers >= 2 ? 2 : baseRoute.transfers + 1,
           rating: baseRoute.rating,
           details: newDetails,
           gmapsUrl: _googleMapsUrl(origin, destination),
@@ -481,7 +482,7 @@ class TripManager {
           mode: baseRoute.mode,
           durationMinutes: baseRoute.durationMinutes + 15,
           estimatedCost: baseRoute.estimatedCost + 5.0,
-          transfers: baseRoute.transfers + 1,
+          transfers: baseRoute.transfers >= 2 ? 2 : baseRoute.transfers + 1,
           rating: baseRoute.rating,
           details: newDetails,
           gmapsUrl: _googleMapsUrl(origin, destination),
@@ -513,7 +514,7 @@ class TripManager {
           mode: baseRoute.mode,
           durationMinutes: baseRoute.durationMinutes + 15,
           estimatedCost: baseRoute.estimatedCost + 5.0,
-          transfers: baseRoute.transfers + 1,
+          transfers: baseRoute.transfers >= 2 ? 2 : baseRoute.transfers + 1,
           rating: baseRoute.rating,
           details: newDetails,
           gmapsUrl: _googleMapsUrl(origin, destination),
@@ -545,7 +546,7 @@ class TripManager {
           mode: baseRoute.mode,
           durationMinutes: baseRoute.durationMinutes + 15,
           estimatedCost: baseRoute.estimatedCost + 5.0,
-          transfers: baseRoute.transfers + 1,
+          transfers: baseRoute.transfers >= 2 ? 2 : baseRoute.transfers + 1,
           rating: baseRoute.rating,
           details: newDetails,
           gmapsUrl: _googleMapsUrl(origin, destination),
@@ -644,6 +645,7 @@ class TripManager {
     final line3Indexes = const {
       202: 0,   // Adly Mansour
       801: 6,   // Nadi El-Shams
+      1001: 12, // El-Estad Monorail
       802: 14,  // Abassia
       608: 18,  // Attaba
       607: 19,  // Nasser
@@ -715,7 +717,7 @@ class TripManager {
     if (isLine1) {
       final originIndex = line1Indexes[id]!;
 
-      if (id != 203 && id != 605) {
+      if (id != 203) {
         // Route B: Metro Line 1 to El-Marg ➔ Microbus to Benha
         final stationsB = (originIndex - 32).abs();
         final metroFareB = _getMetroFare(stationsB);
@@ -861,6 +863,39 @@ class TripManager {
         score: 0,
         isRecommended: false,
       ));
+    }
+
+    if (isMonorailEast || isMonorailWest) {
+      // Add Monorail + Metro + Train option for all destinations going to Benha
+      if (isToBenha) {
+        final monorailFare = isMonorailEast 
+            ? _getMonorailFare(monorailEastIndexes[id]!) 
+            : _getMonorailFare(monorailWestIndexes[id]!);
+        final originIndex = isMonorailEast 
+            ? monorailEastIndexes[id]! 
+            : monorailWestIndexes[id]!;
+        
+        final duration = (originIndex * 3) + 15 + 20 + 15 + 35; // Monorail + Metro + Wait + Train
+        final cost = monorailFare + 10.0 + 35.0; // Monorail + Metro + Train (Agricultural AC)
+        
+        options.add(TransitRouteOption(
+          id: 'monorail-metro-train-${id}',
+          title: localeCode == 'ar'
+              ? 'مونوريل + مترو + قطار رمسيس'
+              : 'Monorail + Metro + Ramses Train',
+          mode: TransitMode.train,
+          durationMinutes: duration,
+          estimatedCost: cost,
+          transfers: 2, // 2 transfers (Monorail -> Metro, Metro -> Train)
+          rating: 4.6,
+          details: localeCode == 'ar'
+              ? 'استقل المونوريل إلى محطة الربط مع المترو، ثم المترو إلى محطة رمسيس (الشهداء)، ثم قطار مباشر إلى محطة قطار بنها.'
+              : 'Take the Monorail to the Metro interchange, then Metro to Ramses (Al-Shohadaa), and finally a train directly to Benha.',
+          gmapsUrl: _googleMapsUrl(origin, destination),
+          score: 0,
+          isRecommended: false,
+        ));
+      }
     }
 
     return options;
