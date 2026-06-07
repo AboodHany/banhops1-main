@@ -92,51 +92,45 @@ class HomeScreen extends StatelessWidget {
                         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
                       ),
                       builder: (context) {
-                        return Container(
-                          padding: const EdgeInsets.all(20),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                localization.translate('popular_zones_sheet_title'),
-                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                              ),
-                              const SizedBox(height: 16),
-                              Flexible(
-                                child: ListView.builder(
-                                  shrinkWrap: true,
-                                  itemCount: planner.benhaDestinations.length,
-                                  itemBuilder: (context, index) {
-                                    final dest = planner.benhaDestinations[index];
-                                    return ListTile(
-                                      leading: const Icon(Icons.place_rounded, color: Color(0xFF0F4C81)),
-                                      title: Text(localization.translateLocation(dest.name)),
-                                      subtitle: dest.alias != null
-                                          ? Text(localization.translateLocation(dest.alias!))
-                                          : null,
-                                      onTap: () {
-                                        planner.setOrigin(zone);
-                                        planner.setDestination(dest);
-                                        planner.planTrip(localeCode: localization.locale.languageCode);
-                                        Navigator.of(context).pop();
-                                        Navigator.of(context).pushNamed(
-                                          AppRoutes.routeResults,
-                                          arguments: {
-                                            'originLabel': localization.translateLocation(zone.name),
-                                            'destinationLabel': localization.translateLocation(dest.name),
-                                            'origin': zone,
-                                            'destination': dest,
-                                          },
-                                        );
-                                      },
-                                    );
-                                  },
+                        return SafeArea(
+                          child: Container(
+                            padding: const EdgeInsets.all(20),
+                            child: ListView(
+                              shrinkWrap: true,
+                              children: [
+                                Text(
+                                  localization.translate('popular_zones_sheet_title'),
+                                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                 ),
-                              ),
-                            ],
+                                const SizedBox(height: 16),
+                                ...planner.benhaDestinations.map((dest) {
+                                  return ListTile(
+                                    leading: const Icon(Icons.place_rounded, color: Color(0xFF0F4C81)),
+                                    title: Text(localization.translateLocation(dest.name)),
+                                    subtitle: dest.alias != null
+                                        ? Text(localization.translateLocation(dest.alias!))
+                                        : null,
+                                    onTap: () {
+                                      planner.setOrigin(zone);
+                                      planner.setDestination(dest);
+                                      planner.planTrip(localeCode: localization.locale.languageCode);
+                                      Navigator.of(context).pop();
+                                      Navigator.of(context).pushNamed(
+                                        AppRoutes.routeResults,
+                                        arguments: {
+                                          'originLabel': localization.translateLocation(zone.name),
+                                          'destinationLabel': localization.translateLocation(dest.name),
+                                          'origin': zone,
+                                          'destination': dest,
+                                        },
+                                      );
+                                    },
+                                  );
+                                }),
+                              ],
+                            ),
                           ),
                         );
                       },
