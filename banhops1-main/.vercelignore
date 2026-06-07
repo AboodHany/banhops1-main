@@ -1,11 +1,35 @@
-# Ignore everything by default to speed up deployment
-*
+# Ignore large source and project directories
+.dart_tool/
+.vscode/
+android/
+ios/
+windows/
+macos/
+linux/
+lib/
+test/
+scratch/
+supabase/
+assets/
+canvaskit/
+icons/
 
-# Allow the build/web output directory
+# Ignore everything inside build directory
+build/*
+# Except build/web
 !build/web
 !build/web/**
 
-# Allow vercel configuration files
-!vercel.json
-!.vercel
-!.vercel/**
+# Ignore root level files not needed for static deployment
+*.sql
+*.patch
+*.log
+*.lock
+*.yaml
+*.md
+.env
+.env.example
+.gitignore
+.metadata
+.flutter-plugins-dependencies
+.last_build_id
