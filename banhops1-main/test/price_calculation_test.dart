@@ -271,7 +271,7 @@ void main() {
 
   test('Metro Line 1 routing test for Helwan University -> Benha', () {
     const origin = LocationNode(
-      id: 601,
+      id: 603,
       name: 'Helwan University',
       latitude: 29.8660,
       longitude: 31.3150,
@@ -388,7 +388,7 @@ void main() {
 
   test('Metro Line 2 routing test for Cairo University -> Benha', () {
     const origin = LocationNode(
-      id: 702,
+      id: 706,
       name: 'Cairo University',
       latitude: 30.0260,
       longitude: 31.2010,
@@ -466,7 +466,7 @@ void main() {
 
   test('Ramses / Ahmed Helmy multi-option routing test', () {
     const shohadaaOrigin = LocationNode(
-      id: 609,
+      id: 622,
       name: 'Al-Shohadaa Metro',
       latitude: 30.0617,
       longitude: 31.2467,
@@ -550,7 +550,7 @@ void main() {
 
   test('El-Marg & Shubra terminal metro route exclusion test', () {
     const margOrigin = LocationNode(
-      id: 203,
+      id: 634,
       name: 'El-Marg',
       latitude: 30.1518,
       longitude: 31.3364,
@@ -560,7 +560,7 @@ void main() {
     );
 
     const shubraOrigin = LocationNode(
-      id: 309,
+      id: 720,
       name: 'Shubra Al-Khaimah',
       latitude: 30.1256,
       longitude: 31.2467,

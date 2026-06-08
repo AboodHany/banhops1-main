@@ -1,10 +1,10 @@
 import 'dart:convert';
-
 import 'package:http/http.dart' as http;
 
 import '../config/app_config.dart';
 import '../models/transit_enums.dart';
 import '../models/transit_route_option.dart';
+import 'user_session.dart';
 
 class AiAgentResult {
   const AiAgentResult({
@@ -30,6 +30,15 @@ class AiAgentService {
     String? destination,
     Map<String, dynamic> userPreferences = const <String, dynamic>{},
   }) async {
+    final username = await UserSession.getUsername();
+
+    // Determine if we should call Gemini API directly.
+    final hasApiKey = _config.aiAgentApiKey.isNotEmpty;
+    final isGeminiDirect = _config.aiAgentBaseUrl.contains('generativelanguage.googleapis.com') ||
+                           (_config.aiAgentApiKey.isNotEmpty && 
+                            !_config.aiAgentBaseUrl.contains('railway') && 
+                            !_config.aiAgentBaseUrl.contains('api/chat'));
+
     final payload = <String, dynamic>{
       'message': userRequest,
       'origin': origin,
@@ -39,26 +48,25 @@ class AiAgentService {
       'context': _buildContext(userRequest, alternatives, origin, destination, userPreferences),
     };
 
-    if (!_config.hasAiAgent) {
-      return AiAgentResult(
-        reply: _fallbackResponse(userRequest, alternatives),
-        rawPayload: payload,
-        usedFallback: true,
-      );
-    }
-
     try {
-      final isGeminiDirect = _config.aiAgentBaseUrl.contains('generativelanguage.googleapis.com');
-      
-      Uri uri = Uri.parse(_config.aiAgentBaseUrl);
-      if (isGeminiDirect && _config.aiAgentApiKey.isNotEmpty) {
-        uri = uri.replace(queryParameters: {'key': _config.aiAgentApiKey});
-      }
-
+      Uri uri;
       Map<String, dynamic> requestBody;
+      Map<String, String> headers = {"Content-Type": "application/json"};
+
       if (isGeminiDirect) {
+        final baseUrl = _config.aiAgentBaseUrl.isNotEmpty && 
+                       _config.aiAgentBaseUrl.contains('generativelanguage.googleapis.com')
+            ? _config.aiAgentBaseUrl
+            : 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent';
+        
+        uri = Uri.parse(baseUrl);
+        if (_config.aiAgentApiKey.isNotEmpty) {
+          uri = uri.replace(queryParameters: {'key': _config.aiAgentApiKey});
+        }
+
         final systemInstructionText = _getSystemInstruction();
         final userText = _buildGeminiUserPrompt(userRequest, alternatives, origin, destination, userPreferences);
+        
         requestBody = {
           'systemInstruction': {
             'parts': [
@@ -75,65 +83,85 @@ class AiAgentService {
           ]
         };
       } else {
-        requestBody = payload;
+        uri = Uri.parse(_config.aiAgentBaseUrl.isNotEmpty 
+            ? _config.aiAgentBaseUrl 
+            : "https://banhops-backend-production.up.railway.app/api/chat/send");
+        
+        if (_config.aiAgentApiKey.isNotEmpty) {
+          headers['Authorization'] = 'Bearer ${_config.aiAgentApiKey}';
+        }
+
+        final bestAlternative = alternatives.isNotEmpty ? alternatives.first : null;
+        requestBody = {
+          "username": username,
+          "message": userRequest,
+          if (origin != null) "from": origin,
+          if (destination != null) "to": destination,
+          if (bestAlternative != null) "transportMode": getTransitModeLabel(bestAlternative.mode),
+          if (bestAlternative != null) "costMin": bestAlternative.estimatedCost.toString(),
+          if (bestAlternative != null) "costMax": bestAlternative.estimatedCost.toString(),
+          "timeMin": "0",
+          if (bestAlternative != null) "timeMax": bestAlternative.durationMinutes.toString(),
+        };
       }
 
-      final response = await http
-          .post(
-            uri,
-            headers: <String, String>{
-              'Content-Type': 'application/json',
-              if (!isGeminiDirect && _config.aiAgentApiKey.isNotEmpty)
-                'Authorization': 'Bearer ${_config.aiAgentApiKey}',
-            },
-            body: jsonEncode(requestBody),
-          )
-          .timeout(const Duration(seconds: 12));
+      final response = await http.post(
+        uri,
+        headers: headers,
+        body: jsonEncode(requestBody),
+      ).timeout(const Duration(seconds: 12));
 
-      if (response.statusCode < 200 || response.statusCode >= 300) {
-        print('AI agent API returned error status: ${response.statusCode}');
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final decoded = jsonDecode(response.body);
+        String reply;
+        
+        if (isGeminiDirect) {
+          try {
+            reply = decoded['candidates'][0]['content']['parts'][0]['text'].toString().trim();
+          } catch (e) {
+            print('Error parsing Gemini direct response: $e. Body: ${response.body}');
+            reply = _fallbackResponse(userRequest, alternatives);
+          }
+        } else {
+          final responseMap = decoded is Map<String, dynamic> ? decoded : <String, dynamic>{'response': decoded.toString()};
+          reply = responseMap['reply']?.toString().trim().isNotEmpty == true
+              ? responseMap['reply'].toString().trim()
+              : responseMap['response']?.toString().trim().isNotEmpty == true
+                  ? responseMap['response'].toString().trim()
+                  : responseMap['message']?.toString().trim().isNotEmpty == true
+                      ? responseMap['message'].toString().trim()
+                      : _fallbackResponse(userRequest, alternatives);
+        }
+
         return AiAgentResult(
-          reply: _fallbackResponse(userRequest, alternatives),
-          rawPayload: <String, dynamic>{
-            ...payload,
-            'statusCode': response.statusCode,
-            'responseBody': response.body,
-          },
-          usedFallback: true,
+          reply: reply,
+          rawPayload: decoded is Map<String, dynamic> ? decoded : <String, dynamic>{'response': decoded},
+          usedFallback: false,
         );
       }
-
-      final decoded = jsonDecode(response.body);
-      String reply;
       
-      if (isGeminiDirect) {
-        try {
-          reply = decoded['candidates'][0]['content']['parts'][0]['text'].toString().trim();
-        } catch (e) {
-          print('Error parsing Gemini direct response: $e. Body: ${response.body}');
-          reply = _fallbackResponse(userRequest, alternatives);
-        }
-      } else {
-        final responseMap = decoded is Map<String, dynamic> ? decoded : <String, dynamic>{'response': decoded.toString()};
-        reply = responseMap['response']?.toString().trim().isNotEmpty == true
-            ? responseMap['response'].toString().trim()
-            : responseMap['message']?.toString().trim().isNotEmpty == true
-                ? responseMap['message'].toString().trim()
-                : _fallbackResponse(userRequest, alternatives);
-      }
-
-      return AiAgentResult(
-        reply: reply,
-        rawPayload: decoded is Map<String, dynamic> ? decoded : <String, dynamic>{'response': decoded},
-        usedFallback: false,
-      );
+      throw Exception("AI API Error ${response.statusCode}");
     } catch (e) {
       print('Error during AI agent generation: $e');
       return AiAgentResult(
         reply: _fallbackResponse(userRequest, alternatives),
-        rawPayload: payload,
+        rawPayload: {
+          ...payload,
+          'error': e.toString(),
+        },
         usedFallback: true,
       );
+    }
+  }
+
+  String getTransitModeLabel(TransitMode mode) {
+    switch (mode) {
+      case TransitMode.microbus:
+        return 'Microbus';
+      case TransitMode.train:
+        return 'Train';
+      case TransitMode.borderBus:
+        return 'Border Bus';
     }
   }
 

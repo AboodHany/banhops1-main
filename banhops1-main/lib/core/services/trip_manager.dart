@@ -120,6 +120,24 @@ class TripManager {
     'El-Kassasin': 'القصاصين',
     'Qantara West': 'القنطرة غرب',
     'Shiblanga': 'شبلنجة',
+    
+    'Minya El-Qamh (Train)': 'محطة قطار منية القمح (قطار)',
+    'Abu Hammad (Train)': 'محطة قطار أبو حماد (قطار)',
+    'Birket El-Sab (Train)': 'محطة قطار بركة السبع (قطار)',
+    'Itay El-Baroud (Train)': 'محطة قطار إيتاي البارود (قطار)',
+    'Kafr El-Dawar (Train)': 'محطة قطار كفر الدوار (قطار)',
+    'Abu Hummus (Train)': 'محطة قطار أبو حمص (قطار)',
+    'Samanoud (Train)': 'محطة قطار سمنود (قطار)',
+    'Sherbin (Train)': 'محطة قطار شربين (قطار)',
+    'El-Tell El-Kebir (Train)': 'محطة قطار التل الكبير (قطار)',
+    'El-Kassasin (Train)': 'محطة قطار القصاصين (قطار)',
+    'Qantara West (Train)': 'محطة قطار القنطرة غرب (قطار)',
+    'Shiblanga (Train)': 'محطة قطار شبلنجة (قطار)',
+    'Benha (Train)': 'بنها (قطار)',
+    'Tanta (Train)': 'طنطا (قطار)',
+    'Alexandria (Train)': 'الإسكندرية (قطار)',
+    'Benha Train Station (Train)': 'محطة قطار بنها (قطار)',
+    'Bashtiel Train Station (Train)': 'قطار الصعيد بشتيل (قطار)',
 
     // Benha Destinations
     'Benha Main Bus Terminal': 'موقف بنها',
@@ -156,43 +174,42 @@ class TripManager {
     'Villas': 'منطقة الفلل',
 
     // New Representative Stations
-    'Helwan University': 'جامعة حلوان',
-    'Maadi': 'المعادي',
-    'Sayeda Zeinab': 'السيدة زينب',
-    'Hadayek El-Kobba': 'حدائق القبة',
-    'El-Marg El-Jedida': 'المرج الجديدة',
-    'Faculty of Agriculture Metro': 'كلية الزراعة (المترو)',
-    'Cairo University': 'جامعة القاهرة',
-    'El-Mounib': 'المنيب',
-    'Nadi El-Shams': 'نادي الشمس',
-    'Abassia': 'العباسية',
-    'Kit Kat': 'الكيت كات',
-    'Rod El-Farag Axis': 'محور روض الفرج',
-    'El-Shorouk': 'الشروق',
-    'Badr City': 'بدر',
-    '10th of October LRT': 'العاشر من رمضان',
-    'Arts & Culture City': 'مدينة الفنون والثقافة',
-    'El-Estad Monorail': 'الإستاد (المونوريل)',
-    'Fifth Settlement': 'التجمع الخامس',
-    'AUC Station': 'الجامعة الأمريكية',
-    'Governmental District': 'الحي الحكومي',
-    'Wadi El-Nile Monorail': 'وادي النيل',
-    'Hyper One': 'هايبر ون',
-    'El-Hosary Monorail': 'الحصري',
-    'Bashtiel Station': 'قطار الصعيد (بشتيل)',
+    'Helwan University (Metro)': 'جامعة حلوان (مترو)',
+    'Maadi (Metro)': 'المعادي (مترو)',
+    'Sayeda Zeinab (Metro)': 'السيدة زينب (مترو)',
+    'Hadayek El-Kobba (Metro)': 'حدائق القبة (مترو)',
+    'El-Marg El-Jedida (Metro)': 'المرج الجديدة (مترو)',
+    'Faculty of Agriculture (Metro)': 'كلية الزراعة (مترو)',
+    'Cairo University (Metro)': 'جامعة القاهرة (مترو)',
+    'El-Mounib (Metro)': 'المنيب (مترو)',
+    'Nadi El-Shams (Metro)': 'نادي الشمس (مترو)',
+    'Abassia (Metro)': 'العباسية (مترو)',
+    'Kit Kat (Metro)': 'الكيت كات (مترو)',
+    'Rod El-Farag Axis (Metro)': 'محور روض الفرج (مترو)',
+    'El-Shorouk (LRT)': 'الشروق (LRT)',
+    'Badr City (LRT)': 'بدر (LRT)',
+    '10th of October (LRT)': 'العاشر من رمضان (LRT)',
+    'Arts & Culture City (LRT)': 'مدينة الفنون والثقافة (LRT)',
+    'El-Estad (Monorail)': 'الإستاد (المونوريل)',
+    'Fifth Settlement (Monorail)': 'التجمع الخامس (المونوريل)',
+    'AUC (Monorail)': 'الجامعة الأمريكية (المونوريل)',
+    'Governmental District (Monorail)': 'الحي الحكومي (المونوريل)',
+    'Wadi El-Nile (Monorail)': 'وادي النيل (المونوريل)',
+    'Hyper One (Monorail)': 'هايبر ون (المونوريل)',
+    'El-Hosary (Monorail)': 'الحصري (المونوريل)',
     
-    'Sadat Metro': 'السادات (المترو)',
-    'Nasser Metro': 'ناصر (المترو)',
-    'Attaba Metro': 'العتبة (المترو)',
-    'Al-Shohadaa Metro': 'الشهداء (المترو)',
-    'El-Mazallat Metro': 'المظلات (المترو)',
-    'Rod El-Farag Metro': 'روض الفرج (المترو)',
-    'Massarra Metro': 'مسرة (المترو)',
-    'Mohamed Naguib Metro': 'محمد نجيب (المترو)',
-    'Opera Metro': 'الأوبرا (المترو)',
-    'El-Bohouth Metro': 'البحوث (المترو)',
-    'League of Arab States Metro': 'جامعة الدول (المترو)',
-    'Boulaq El-Dakrour Metro': 'بولاق الدكرور (المترو)',
+    'Sadat (Metro)': 'السادات (مترو)',
+    'Nasser (Metro)': 'ناصر (مترو)',
+    'Attaba (Metro)': 'العتبة (مترو)',
+    'Al-Shohadaa (Metro)': 'الشهداء (مترو)',
+    'El-Mazallat (Metro)': 'المظلات (مترو)',
+    'Rod El-Farag (Metro)': 'روض الفرج (مترو)',
+    'Massarra (Metro)': 'مسرة (مترو)',
+    'Mohamed Naguib (Metro)': 'محمد نجيب (مترو)',
+    'Opera (Metro)': 'الأوبرا (مترو)',
+    'El-Bohouth (Metro)': 'البحوث (مترو)',
+    'League of Arab States (Metro)': 'جامعة الدول (مترو)',
+    'Boulaq El-Dakrour (Metro)': 'بولاق الدكرور (مترو)',
   };
 
   String _translate(String name, String localeCode) {
@@ -215,58 +232,6 @@ class TripManager {
       "arr_benha": "08:50",
       "price": 45.0,
       "duration": 35
-    },
-    {
-      "train_no": "911",
-      "type": "مكيف إسباني",
-      "type_en": "Spanish AC",
-      "origin": "القاهرة",
-      "origin_en": "Cairo",
-      "dest": "الإسكندرية",
-      "dest_en": "Alexandria",
-      "dep_time": "10:00",
-      "arr_benha": "10:35",
-      "price": 45.0,
-      "duration": 35
-    },
-    {
-      "train_no": "2025",
-      "type": "تالجو فاخر",
-      "type_en": "Talgo Luxury",
-      "origin": "القاهرة",
-      "origin_en": "Cairo",
-      "dest": "الإسكندرية",
-      "dest_en": "Alexandria",
-      "dep_time": "08:00",
-      "arr_benha": "08:30",
-      "price": 70.0,
-      "duration": 30
-    },
-    {
-      "train_no": "945",
-      "type": "مكيف زراعي",
-      "type_en": "Agricultural AC",
-      "origin": "القاهرة",
-      "origin_en": "Cairo",
-      "dest": "بورسعيد",
-      "dest_en": "Port Said",
-      "dep_time": "06:10",
-      "arr_benha": "06:50",
-      "price": 35.0,
-      "duration": 40
-    },
-    {
-      "train_no": "965",
-      "type": "سريع تحيا مصر",
-      "type_en": "Tahya Misr Fast",
-      "origin": "القاهرة",
-      "origin_en": "Cairo",
-      "dest": "المنصورة",
-      "dest_en": "Mansoura",
-      "dep_time": "07:30",
-      "arr_benha": "08:15",
-      "price": 20.0,
-      "duration": 45
     }
   ];
 
@@ -277,15 +242,6 @@ class TripManager {
       "type_en": "Spanish AC",
       "dep_time": "07:00",
       "arr_benha": "07:45",
-      "price": 30.0,
-      "duration": 45
-    },
-    {
-      "train_no": "912",
-      "type": "مكيف فرنسي",
-      "type_en": "French AC",
-      "dep_time": "11:30",
-      "arr_benha": "12:15",
       "price": 30.0,
       "duration": 45
     }
@@ -300,15 +256,6 @@ class TripManager {
       "arr_benha": "07:15",
       "price": 15.0,
       "duration": 75
-    },
-    {
-      "train_no": "966",
-      "type": "مكيف زراعي",
-      "type_en": "Agricultural AC",
-      "dep_time": "15:00",
-      "arr_benha": "16:15",
-      "price": 25.0,
-      "duration": 75
     }
   ];
 
@@ -321,15 +268,6 @@ class TripManager {
       "arr_benha": "08:10",
       "price": 55.0,
       "duration": 130
-    },
-    {
-      "train_no": "910",
-      "type": "تالجو فاخر",
-      "type_en": "Talgo Luxury",
-      "dep_time": "14:00",
-      "arr_benha": "15:50",
-      "price": 80.0,
-      "duration": 110
     }
   ];
 
@@ -613,33 +551,64 @@ class TripManager {
     
     // Index Maps for station counts
     final line1Indexes = const {
-      205: 0,   // Helwan
-      601: 2,   // Helwan University
-      602: 10,  // Maadi
-      603: 16,  // Sayeda Zeinab
-      606: 18,  // Sadat
-      607: 19,  // Nasser
-      609: 20,  // Al-Shohadaa (Ramses)
-      604: 24,  // Hadayek El-Kobba
-      203: 32,  // El-Marg
-      605: 33,  // El-Marg El-Jedida
+      601: 0,   // Helwan
+      602: 1,   // Ain Helwan
+      603: 2,   // Helwan University
+      604: 3,   // Wadi Hof
+      605: 4,   // Hadayek Helwan
+      606: 5,   // El-Maasara
+      607: 6,   // Tora El-Asmant
+      608: 7,   // Kozzika
+      609: 8,   // Tora El-Balad
+      610: 9,   // Sakanat El-Maadi
+      611: 10,  // Maadi
+      612: 11,  // Hadayek El-Maadi
+      613: 12,  // Dar El-Salam
+      614: 13,  // El-Zahraa
+      615: 14,  // Mar Girgis
+      616: 15,  // El-Malek El-Saleh
+      617: 16,  // Sayeda Zeinab
+      618: 17,  // Saad Zaghloul
+      619: 18,  // Sadat
+      620: 19,  // Nasser
+      621: 20,  // Orabi
+      622: 21,  // Al-Shohadaa
+      623: 22,  // Ghamra
+      624: 23,  // El-Demerdash
+      625: 24,  // Manshiet El-Sadr
+      626: 25,  // Kobri El-Qobba
+      627: 26,  // Hammamat El-Qobba
+      628: 27,  // Saray El-Qobba
+      629: 28,  // Hadayek El-Zaitoun
+      630: 29,  // Helmiet El-Zaitoun
+      631: 30,  // El-Matareya
+      632: 31,  // Ain Shams
+      633: 32,  // Ezbet El-Nakhl
+      634: 33,  // El-Marg
+      635: 34,  // El-Marg El-Jedida
     };
 
     final line2Indexes = const {
-      309: 0,   // Shubra El-Kheima
-      701: 1,   // Faculty of Agriculture
-      705: 2,   // El-Mazallat
-      706: 5,   // Rod El-Farag Metro
-      707: 6,   // Massarra
-      609: 7,   // Al-Shohadaa (Ramses)
-      608: 8,   // Attaba
-      708: 9,   // Mohamed Naguib
-      606: 10,  // Sadat
-      709: 11,  // Opera
-      215: 12,  // Dokki
-      710: 13,  // El-Bohouth
-      702: 14,  // Cairo University
-      703: 19,  // El-Mounib
+      701: 0,   // El-Mounib
+      702: 1,   // Sakiat Mekky
+      703: 2,   // Omm El-Misryeen
+      704: 3,   // Giza
+      705: 4,   // Faisal
+      706: 5,   // Cairo University
+      707: 6,   // El-Bohouth
+      708: 7,   // Dokki
+      709: 8,   // Opera
+      619: 9,   // Sadat
+      711: 10,  // Mohamed Naguib
+      712: 11,  // Attaba
+      622: 12,  // Al-Shohadaa
+      714: 13,  // Massarra
+      715: 14,  // Rod El-Farag
+      716: 15,  // St. Teresa
+      717: 16,  // El-Khalafawy
+      718: 17,  // El-Mazallat
+      719: 18,  // Faculty of Agriculture
+      720: 19,  // Shubra El-Kheima
     };
 
     final line3Indexes = const {
@@ -647,15 +616,15 @@ class TripManager {
       801: 6,   // Nadi El-Shams
       1001: 12, // El-Estad Monorail
       802: 14,  // Abassia
-      608: 18,  // Attaba
-      607: 19,  // Nasser
+      712: 18,  // Attaba
+      620: 19,  // Nasser
       803: 22,  // Kit Kat
       212: 24,  // Imbaba
       804: 28,  // Rod El-Farag Axis
       1101: 30, // Wadi El-Nile
       805: 31,  // League of Arab States
       806: 32,  // Boulaq El-Dakrour
-      702: 33,  // Cairo University
+      706: 33,  // Cairo University
     };
 
     final lrtIndexes = const {
@@ -688,7 +657,7 @@ class TripManager {
     final isMonorailEast = monorailEastIndexes.containsKey(id);
     final isMonorailWest = monorailWestIndexes.containsKey(id);
 
-    if (id == 609) {
+    if (id == 622) {
       final activeTrains = trains.isNotEmpty ? trains : _allHardcodedTrains();
       final cairoTrains = activeTrains.where((t) => t['origin'] == 'القاهرة' || t['origin_en'] == 'Cairo').toList();
       if (cairoTrains.isNotEmpty) {
@@ -715,9 +684,9 @@ class TripManager {
     if (isLine1) {
       final originIndex = line1Indexes[id]!;
 
-      if (id != 203) {
+      if (id != 634 && id != 635) {
         // Route B: Metro Line 1 to El-Marg ➔ Microbus to Benha
-        final stationsB = (originIndex - 32).abs();
+        final stationsB = (originIndex - 33).abs();
         final metroFareB = _getMetroFare(stationsB);
         options.add(TransitRouteOption(
           id: 'metro-l1-marg-microbus-${id}',
@@ -742,9 +711,9 @@ class TripManager {
     if (isLine2) {
       final originIndex = line2Indexes[id]!;
 
-      if (id != 309) {
+      if (id != 720) {
         // Route A: Metro Line 2 to Shubra El-Kheima ➔ Microbus to Benha
-        final stationsA = (originIndex - 0).abs();
+        final stationsA = (originIndex - 19).abs();
         final metroFareA = _getMetroFare(stationsA);
         options.add(TransitRouteOption(
           id: 'metro-l2-shubra-microbus-${id}',
@@ -934,7 +903,19 @@ class TripManager {
         return true;
       }
       
-      return tOrigin == originKeyword || tOriginEn == originKeyword || tOrigin == origin.name || tOriginEn == origin.name;
+      final cleanTOrigin = _cleanStationName(tOrigin).toLowerCase();
+      final cleanTOriginEn = _cleanStationName(tOriginEn).toLowerCase();
+      final cleanOriginName = _cleanStationName(origin.name).toLowerCase();
+      final cleanOriginKeyword = _cleanStationName(originKeyword).toLowerCase();
+      
+      return cleanTOrigin == cleanOriginKeyword || 
+             cleanTOriginEn == cleanOriginKeyword || 
+             cleanTOrigin == cleanOriginName || 
+             cleanTOriginEn == cleanOriginName ||
+             cleanOriginName.contains(cleanTOrigin) ||
+             cleanTOrigin.contains(cleanOriginName) ||
+             cleanOriginName.contains(cleanTOriginEn) ||
+             cleanTOriginEn.contains(cleanOriginName);
     }).toList();
 
     // 1. Add specific trains if origin supports direct rail
@@ -1274,12 +1255,13 @@ class TripManager {
     final knownFares = const {
       201: 26.5,  // Ahmed Helmy
       202: 30.0,  // El-Salam (Adly Mansour)
-      203: 28.0,  // El-Marg
+      634: 28.0,  // El-Marg
+      635: 28.0,  // El-Marg El-Jedida
       204: 21.5,  // Shubra El-Maza (Ahmad Orabi / Institution)
       211: 58.0,  // El-Haram
       213: 60.0,  // 6th of October
       308: 41.0,  // Al-Obour
-      309: 21.5,  // Shubra Al-Khaimah (Institution)
+      720: 21.5,  // Shubra Al-Khaimah (Institution)
       321: 19.0,  // Shibin El-Kom
       325: 16.0,  // Quweisna
       331: 30.0,  // Tanta
@@ -1312,5 +1294,14 @@ class TripManager {
       ..._mansouraTrains.map((t) => {...t, 'origin': 'Mansoura', 'origin_en': 'Mansoura', 'dest': 'Benha', 'dest_en': 'Benha'}),
       ..._alexTrains.map((t) => {...t, 'origin': 'Alexandria City', 'origin_en': 'Alexandria City', 'dest': 'Benha', 'dest_en': 'Benha'}),
     ];
+  }
+
+  String _cleanStationName(String name) {
+    String clean = name;
+    clean = clean.replaceAll(RegExp(r'\s*\((Train|Metro|LRT|Monorail|قطار|مترو|المونوريل)\)'), '');
+    clean = clean.replaceAll('محطة قطار ', '');
+    clean = clean.replaceAll('قطار الصعيد ', '');
+    clean = clean.replaceAll('محطة ', '');
+    return clean.trim();
   }
 }

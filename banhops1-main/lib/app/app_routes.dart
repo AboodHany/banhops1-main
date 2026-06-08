@@ -4,6 +4,7 @@ class AppRoutes {
   static const welcome = '/welcome';
   static const login = '/login';
   static const register = '/register';
+  static const forgotPassword = '/forgot-password';
 
   // Main Navigation (Pages 43-45)
   static const main = '/main';

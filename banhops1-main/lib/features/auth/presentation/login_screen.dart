@@ -5,7 +5,7 @@ import '../../../core/localization/app_localizations.dart';
 import '../../../core/state/auth_controller.dart';
 import '../../../app/app_routes.dart';
 
-/// LoginScreen - Page 41: User Login Integration with Supabase Auth
+/// LoginScreen - Page 41: User Login Integration with Railway Auth using original banhops1-main UI
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -14,14 +14,14 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _emailController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _obscurePassword = true;
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _usernameController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -53,7 +53,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF0F4C81).withValues(alpha: 0.08),
+                        color: const Color(0xFF0F4C81).withAlpha(20),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: const Icon(
@@ -89,21 +89,20 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Column(
                         children: [
                           TextFormField(
-                            controller: _emailController,
+                            controller: _usernameController,
                             decoration: InputDecoration(
-                              labelText: localization.translate('email'),
-                              prefixIcon: const Icon(Icons.email_outlined),
+                              labelText: 'Username',
+                              prefixIcon: const Icon(Icons.person_outline_rounded),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            keyboardType: TextInputType.emailAddress,
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
-                                return 'Email is required';
+                                return 'Username is required';
                               }
-                              if (!value.contains('@')) {
-                                return 'Enter a valid email';
+                              if (value.trim().length < 4) {
+                                return 'Username must be at least 4 characters';
                               }
                               return null;
                             },
@@ -133,8 +132,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               if (value == null || value.isEmpty) {
                                 return 'Password is required';
                               }
-                              if (value.length < 6) {
-                                return 'Password needs at least 6 characters';
+                              if (value.length < 8) {
+                                return 'Password must be at least 8 characters';
                               }
                               return null;
                             },
@@ -142,14 +141,30 @@ class _LoginScreenState extends State<LoginScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 12),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pushNamed(AppRoutes.forgotPassword);
+                        },
+                        child: Text(
+                          localization.translate('forgot_password'),
+                          style: const TextStyle(
+                            color: Color(0xFF0F4C81),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
                     if (authController.errorMessage != null)
                       Padding(
                         padding: const EdgeInsets.only(bottom: 16),
                         child: Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.redAccent.withValues(alpha: 0.1),
+                            color: Colors.redAccent.withAlpha(25),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(color: Colors.redAccent, width: 0.5),
                           ),
@@ -167,9 +182,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             : () async {
                                 if (!_formKey.currentState!.validate()) return;
 
-                                await context.read<AuthController>().signInWithEmail(
-                                      _emailController.text.trim(),
-                                      _passwordController.text,
+                                await context.read<AuthController>().signIn(
+                                      username: _usernameController.text.trim(),
+                                      password: _passwordController.text,
                                     );
 
                                 if (context.mounted &&

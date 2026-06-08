@@ -225,9 +225,18 @@ class TripRepository {
 
     try {
       final response = await client.from('trains').select();
-      return (response as List<dynamic>)
+      final list = (response as List<dynamic>)
           .map((r) => r as Map<String, dynamic>)
           .toList();
+
+      final Map<String, Map<String, dynamic>> uniqueTrains = {};
+      for (final train in list) {
+        final origin = train['origin'] as String? ?? '';
+        if (origin.isNotEmpty && !uniqueTrains.containsKey(origin)) {
+          uniqueTrains[origin] = train;
+        }
+      }
+      return uniqueTrains.values.toList();
     } catch (e) {
       print('Error fetching trains from Supabase: $e');
       return [];

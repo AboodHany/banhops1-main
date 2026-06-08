@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/state/auth_controller.dart';
 import '../../../app/app_routes.dart';
 
-/// RegisterScreen - Page 42: User Registration Integration with Supabase Auth
+/// RegisterScreen - User Registration Integration with Railway Auth using original banhops1-main UI
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
@@ -14,22 +15,134 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  final _nameController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  bool _obscurePassword = true;
-  bool _obscureConfirmPassword = true;
+  final _firstName = TextEditingController();
+  final _lastName = TextEditingController();
+  final _username = TextEditingController();
+  final _email = TextEditingController();
+  final _phone = TextEditingController();
+  final _password = TextEditingController();
+  final _confirmPassword = TextEditingController();
+
+  bool _obscurePass = true;
+  bool _obscureConfirm = true;
   bool _agreedToTerms = false;
+
+  bool _hasMinLength = false;
+  bool _hasDigit = false;
+  bool _hasUppercase = false;
+  bool _hasSpecialChar = false;
+  bool _isEmailValid = false;
+  bool _isPhoneValid = false;
+
+  void _checkPassword(String value) {
+    setState(() {
+      _hasMinLength = value.length >= 8;
+      _hasDigit = value.contains(RegExp(r'[0-9]'));
+      _hasUppercase = value.contains(RegExp(r'[A-Z]'));
+      _hasSpecialChar = value.contains(RegExp(r'[!@#$%^&*()_+|?]'));
+    });
+  }
+
+  void _checkEmail(String value) {
+    final emailRegex = RegExp(r'^[\w.\-]+@[\w\-]+\.[\w.\-]+$');
+    setState(() {
+      _isEmailValid = emailRegex.hasMatch(value.trim());
+    });
+  }
+
+  void _checkPhone(String value) {
+    final phoneRegex = RegExp(r'^01[0125][0-9]{8}$');
+    setState(() {
+      _isPhoneValid = phoneRegex.hasMatch(value.trim());
+    });
+  }
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
+    _firstName.dispose();
+    _lastName.dispose();
+    _username.dispose();
+    _email.dispose();
+    _phone.dispose();
+    _password.dispose();
+    _confirmPassword.dispose();
     super.dispose();
+  }
+
+  String? _required(String? v, String errorMsg) {
+    if (v == null || v.trim().isEmpty) return errorMsg;
+    return null;
+  }
+
+  Future<void> _submit() async {
+    if (!_isPhoneValid || !_isEmailValid || !_hasMinLength || !_hasDigit || !_hasUppercase || !_hasSpecialChar) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please meet all input requirements first"),
+          backgroundColor: Colors.orangeAccent,
+        ),
+      );
+      return;
+    }
+
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    final auth = context.read<AuthController>();
+    await auth.signUp(
+      firstName: _firstName.text.trim(),
+      lastName: _lastName.text.trim(),
+      username: _username.text.trim(),
+      email: _email.text.trim(),
+      phone: _phone.text.trim(),
+      password: _password.text.trim(),
+    );
+
+    if (mounted) {
+      if (auth.profile != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Account created successfully"),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.of(context).pushReplacementNamed(AppRoutes.main);
+      } else if (auth.errorMessage != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(auth.errorMessage!),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
+  }
+
+  Widget _buildRequirementItem(String text, bool isMet) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            isMet ? Icons.check_circle_rounded : Icons.cancel_rounded,
+            color: isMet ? Colors.green : Colors.redAccent,
+            size: 16,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 13,
+                color: isMet ? Colors.green.shade700 : Colors.red.shade400,
+                fontWeight: isMet ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -55,11 +168,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 16),
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF0F4C81).withValues(alpha: 0.08),
+                        color: const Color(0xFF0F4C81).withAlpha(20),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: const Icon(
@@ -87,25 +200,52 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       key: _formKey,
                       child: Column(
                         children: [
-                          TextFormField(
-                            controller: _nameController,
-                            decoration: InputDecoration(
-                              labelText: localization.translate('first_name'),
-                              prefixIcon: const Icon(Icons.person_outline),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextFormField(
+                                  controller: _firstName,
+                                  decoration: InputDecoration(
+                                    labelText: localization.translate('first_name'),
+                                    prefixIcon: const Icon(Icons.person_outline),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  validator: (v) => _required(v, 'First name is required'),
+                                ),
                               ),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'Name is required';
-                              }
-                              return null;
-                            },
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: TextFormField(
+                                  controller: _lastName,
+                                  decoration: InputDecoration(
+                                    labelText: localization.translate('last_name'),
+                                    prefixIcon: const Icon(Icons.person_outline),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  validator: (v) => _required(v, 'Last name is required'),
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 16),
                           TextFormField(
-                            controller: _emailController,
+                            controller: _username,
+                            decoration: InputDecoration(
+                              labelText: 'Username',
+                              prefixIcon: const Icon(Icons.person_outline_rounded),
+                              border: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            validator: (v) => _required(v, 'Username is required'),
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _email,
                             decoration: InputDecoration(
                               labelText: localization.translate('email'),
                               prefixIcon: const Icon(Icons.email_outlined),
@@ -114,77 +254,104 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ),
                             ),
                             keyboardType: TextInputType.emailAddress,
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'Email is required';
-                              }
-                              if (!value.contains('@')) {
-                                return 'Enter a valid email';
-                              }
+                            onChanged: _checkEmail,
+                            validator: (v) {
+                              if (v == null || v.trim().isEmpty) return 'Email is required';
+                              if (!_isEmailValid) return 'Enter a valid email';
                               return null;
                             },
                           ),
+                          const Padding(
+                            padding: EdgeInsets.only(top: 8, left: 4, right: 4),
+                            child: Divider(color: Colors.transparent, height: 1),
+                          ),
+                          _buildRequirementItem("Email format is valid", _isEmailValid),
                           const SizedBox(height: 16),
                           TextFormField(
-                            controller: _passwordController,
+                            controller: _phone,
+                            decoration: InputDecoration(
+                              labelText: 'Phone Number',
+                              prefixIcon: const Icon(Icons.phone_outlined),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            keyboardType: TextInputType.phone,
+                            onChanged: _checkPhone,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                              LengthLimitingTextInputFormatter(11),
+                            ],
+                            validator: (v) {
+                              if (v == null || v.trim().isEmpty) return 'Phone number is required';
+                              if (!_isPhoneValid) return "Invalid phone number";
+                              return null;
+                            },
+                          ),
+                          const Padding(
+                            padding: EdgeInsets.only(top: 8, left: 4, right: 4),
+                            child: Divider(color: Colors.transparent, height: 1),
+                          ),
+                          _buildRequirementItem("Valid Egyptian phone number (01...)", _isPhoneValid),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _password,
                             decoration: InputDecoration(
                               labelText: localization.translate('password'),
                               prefixIcon: const Icon(Icons.lock_outlined),
                               suffixIcon: IconButton(
                                 icon: Icon(
-                                  _obscurePassword
-                                      ? Icons.visibility_outlined
-                                      : Icons.visibility_off_outlined,
+                                  _obscurePass ? Icons.visibility_outlined : Icons.visibility_off_outlined,
                                 ),
-                                onPressed: () {
-                                  setState(() => _obscurePassword = !_obscurePassword);
-                                },
+                                onPressed: () => setState(() => _obscurePass = !_obscurePass),
                               ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            obscureText: _obscurePassword,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Password is required';
-                              }
-                              if (value.length < 6) {
-                                return 'Password needs at least 6 characters';
+                            obscureText: _obscurePass,
+                            onChanged: _checkPassword,
+                            validator: (v) {
+                              if (v == null || v.isEmpty) return 'Password is required';
+                              if (!_hasMinLength || !_hasDigit || !_hasUppercase || !_hasSpecialChar) {
+                                return "Please satisfy all password conditions";
                               }
                               return null;
                             },
                           ),
+                          const Padding(
+                            padding: EdgeInsets.only(top: 8, left: 4, right: 4),
+                            child: Divider(color: Colors.transparent, height: 1),
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildRequirementItem("At least 8 characters", _hasMinLength),
+                              _buildRequirementItem("At least one digit (0-9)", _hasDigit),
+                              _buildRequirementItem("At least one uppercase letter (A-Z)", _hasUppercase),
+                              _buildRequirementItem("At least one special character (!@#\$%)", _hasSpecialChar),
+                            ],
+                          ),
                           const SizedBox(height: 16),
                           TextFormField(
-                            controller: _confirmPasswordController,
+                            controller: _confirmPassword,
                             decoration: InputDecoration(
-                              labelText: 'Confirm Password',
+                              labelText: localization.translate('confirm_password'),
                               prefixIcon: const Icon(Icons.lock_outlined),
                               suffixIcon: IconButton(
                                 icon: Icon(
-                                  _obscureConfirmPassword
-                                      ? Icons.visibility_outlined
-                                      : Icons.visibility_off_outlined,
+                                  _obscureConfirm ? Icons.visibility_outlined : Icons.visibility_off_outlined,
                                 ),
-                                onPressed: () {
-                                  setState(
-                                    () => _obscureConfirmPassword = !_obscureConfirmPassword,
-                                  );
-                                },
+                                onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
                               ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            obscureText: _obscureConfirmPassword,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Confirm password is required';
-                              }
-                              if (value != _passwordController.text) {
-                                return 'Passwords do not match';
-                              }
+                            obscureText: _obscureConfirm,
+                            validator: (v) {
+                              if (v == null || v.trim().isEmpty) return 'Confirm password is required';
+                              if (v != _password.text) return 'Passwords do not match';
                               return null;
                             },
                           ),
@@ -206,7 +373,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.redAccent.withValues(alpha: 0.1),
+                            color: Colors.redAccent.withAlpha(25),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(color: Colors.redAccent, width: 0.5),
                           ),
@@ -219,24 +386,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     SizedBox(
                       height: 54,
                       child: ElevatedButton(
-                        onPressed:
-                            (authController.isLoading || !_agreedToTerms)
-                                ? null
-                                : () async {
-                                    if (!_formKey.currentState!.validate()) return;
-
-                                    await context.read<AuthController>().signUpWithEmail(
-                                          _nameController.text.trim(),
-                                          _emailController.text.trim(),
-                                          _passwordController.text,
-                                        );
-
-                                    if (context.mounted &&
-                                        context.read<AuthController>().profile != null) {
-                                      Navigator.of(context)
-                                          .pushReplacementNamed(AppRoutes.main);
-                                    }
-                                  },
+                        onPressed: (authController.isLoading || !_agreedToTerms) ? null : _submit,
                         child: authController.isLoading
                             ? const SizedBox(
                                 width: 20,
@@ -251,8 +401,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     const SizedBox(height: 16),
                     TextButton(
-                      onPressed: () =>
-                          Navigator.of(context).pushReplacementNamed(AppRoutes.login),
+                      onPressed: () => Navigator.of(context).pushReplacementNamed(AppRoutes.login),
                       child: RichText(
                         text: TextSpan(
                           text: 'Already have an account? ',

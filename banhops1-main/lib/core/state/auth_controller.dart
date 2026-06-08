@@ -3,9 +3,12 @@ import 'package:flutter/material.dart';
 import '../config/app_config.dart';
 import '../models/app_user_profile.dart';
 import '../services/auth_service.dart';
+import '../services/user_session.dart';
 
 class AuthController extends ChangeNotifier {
-  AuthController({required AppConfig config}) : _authService = AuthService(config);
+  AuthController({required AppConfig config}) : _authService = AuthService(config) {
+    _loadCachedProfile();
+  }
 
   final AuthService _authService;
 
@@ -17,12 +20,64 @@ class AuthController extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   AppUserProfile? get profile => _profile;
 
+  Future<void> _loadCachedProfile() async {
+    try {
+      final has = await UserSession.hasSession();
+      if (has) {
+        final username = await UserSession.getUsername();
+        final firstName = await UserSession.getFirstName();
+        _profile = AppUserProfile(
+          id: username,
+          name: firstName,
+          email: '',
+          completedTrips: 12,
+          languageCode: 'en',
+          username: username,
+          firstName: firstName,
+        );
+        notifyListeners();
+      }
+    } catch (_) {}
+  }
+
+  Future<void> signIn({required String username, required String password}) async {
+    await _runAuthAction(() => _authService.signIn(username: username, password: password));
+  }
+
   Future<void> signInWithEmail(String email, String password) async {
-    await _runAuthAction(() => _authService.signInWithEmail(email, password));
+    await signIn(username: email.split('@').first, password: password);
+  }
+
+  Future<void> signUp({
+    required String firstName,
+    required String lastName,
+    required String username,
+    required String email,
+    required String phone,
+    required String password,
+  }) async {
+    await _runAuthAction(() => _authService.signUp(
+          firstName: firstName,
+          lastName: lastName,
+          username: username,
+          email: email,
+          phone: phone,
+          password: password,
+        ));
   }
 
   Future<void> signUpWithEmail(String name, String email, String password) async {
-    await _runAuthAction(() => _authService.signUpWithEmail(name, email, password));
+    final parts = name.split(' ');
+    final first = parts.isNotEmpty ? parts.first : name;
+    final last = parts.length > 1 ? parts.sublist(1).join(' ') : 'User';
+    await signUp(
+      firstName: first,
+      lastName: last,
+      username: email.split('@').first,
+      email: email,
+      phone: '01234567890',
+      password: password,
+    );
   }
 
   Future<void> signInWithGoogle() async {
@@ -59,7 +114,7 @@ class AuthController extends ChangeNotifier {
     try {
       _profile = await action();
     } catch (error) {
-      _errorMessage = error.toString();
+      _errorMessage = error.toString().replaceAll('Exception: ', '');
     } finally {
       _isLoading = false;
       notifyListeners();

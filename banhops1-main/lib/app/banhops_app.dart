@@ -16,6 +16,8 @@ import '../core/theme/app_theme.dart';
 import '../features/auth/presentation/welcome_screen.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/register_screen.dart';
+import '../features/auth/presentation/forgot_password_screen.dart';
+import '../core/services/user_session.dart';
 import '../features/navigation/main_navigation_hub.dart';
 import '../features/search/presentation/route_results_screen.dart';
 import '../features/search/presentation/trip_details_screen.dart';
@@ -95,13 +97,16 @@ class BanHopsApp extends StatelessWidget {
                 case AppRoutes.splash:
                   return MaterialPageRoute(
                     builder: (_) => SplashScreen(
-                      onFinish: (context) {
+                      onFinish: (context) async {
+                        final hasSession = await UserSession.hasSession();
                         final route = state.locale == null
                             ? AppRoutes.welcome
-                            : (SupabaseService.hasAuthenticatedSession
+                            : (hasSession
                                 ? AppRoutes.main
                                 : AppRoutes.login);
-                        Navigator.of(context).pushReplacementNamed(route);
+                        if (context.mounted) {
+                          Navigator.of(context).pushReplacementNamed(route);
+                        }
                       },
                     ),
                   );
@@ -119,6 +124,11 @@ class BanHopsApp extends StatelessWidget {
                 case AppRoutes.register:
                   return MaterialPageRoute(
                     builder: (_) => const RegisterScreen(),
+                  );
+
+                case AppRoutes.forgotPassword:
+                  return MaterialPageRoute(
+                    builder: (_) => const ForgotPasswordScreen(),
                   );
 
                 // Main Navigation Hub (Pages 43-45)
