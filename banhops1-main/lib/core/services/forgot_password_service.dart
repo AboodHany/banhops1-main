@@ -2,14 +2,14 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ForgotPasswordService {
-  static const String _baseUrl =
+  static String baseUrl =
       'https://banhops-backend-production.up.railway.app';
 
   static Future<String> recoverPassword({
     required String username,
     required String email,
   }) async {
-    final url = Uri.parse('$_baseUrl/api/auth/forgot-password');
+    final url = Uri.parse('$baseUrl/api/auth/forgot-password');
 
     final response = await http.post(
       url,

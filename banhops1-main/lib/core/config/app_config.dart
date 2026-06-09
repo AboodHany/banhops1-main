@@ -7,6 +7,7 @@ class AppConfig {
     required this.googleMapsApiKey,
     required this.enableGoogleSignIn,
     required this.enableFacebookSignIn,
+    required this.backendBaseUrl,
   });
 
   factory AppConfig.fromEnvironment() {
@@ -24,6 +25,10 @@ class AppConfig {
         'ENABLE_FACEBOOK_SIGN_IN',
         defaultValue: false,
       ),
+      backendBaseUrl: const String.fromEnvironment(
+        'BACKEND_BASE_URL',
+        defaultValue: 'https://banhops-backend-production.up.railway.app',
+      ),
     );
   }
 
@@ -34,6 +39,7 @@ class AppConfig {
   final String googleMapsApiKey;
   final bool enableGoogleSignIn;
   final bool enableFacebookSignIn;
+  final String backendBaseUrl;
 
   bool get hasSupabase =>
       supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty;

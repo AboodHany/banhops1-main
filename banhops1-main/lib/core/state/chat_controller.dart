@@ -8,9 +8,14 @@ import '../services/ai_agent_service.dart';
 import '../services/chat_persistence_service.dart';
 import '../services/user_session.dart';
 
+const String kTransitScopeApologyAr =
+    'عذراً، أنا مساعد ذكي مخصص للإجابة على استفسارات المواصلات والرحلات فقط. كيف يمكنني مساعدتك في رحلتك اليوم؟';
+const String kTransitScopeApologyEn =
+    'Sorry, I can only help with transit, routes, fares, and trips. How can I help with your trip today?';
+
 class ChatController extends ChangeNotifier {
   ChatController({required AppConfig config})
-      : _aiAgentService = AiAgentService(config) {
+    : _aiAgentService = AiAgentService(config) {
     initChat();
   }
 
@@ -34,16 +39,22 @@ class ChatController extends ChangeNotifier {
     try {
       final data = await ChatPersistenceService.getMessages(_username);
       if (data.isNotEmpty) {
-        _messages = data.map((m) => ChatMessage(
-          role: m['isUser'] == true ? 'user' : 'assistant',
-          content: m['message'] ?? '',
-          createdAt: DateTime.tryParse(m['createdAt'] ?? '') ?? DateTime.now(),
-        )).toList();
+        _messages = data
+            .map(
+              (m) => ChatMessage(
+                role: m['isUser'] == true ? 'user' : 'assistant',
+                content: m['message'] ?? '',
+                createdAt:
+                    DateTime.tryParse(m['createdAt'] ?? '') ?? DateTime.now(),
+              ),
+            )
+            .toList();
       } else {
         _messages = <ChatMessage>[
           ChatMessage(
             role: 'assistant',
-            content: 'Ask me about the fastest, cheapest, or least-transfer route in Benha.',
+            content:
+                'Ask me about the fastest, cheapest, or least-transfer route in Benha.',
             createdAt: DateTime.now(),
             isSystem: true,
           ),
@@ -59,7 +70,8 @@ class ChatController extends ChangeNotifier {
       _messages = <ChatMessage>[
         ChatMessage(
           role: 'assistant',
-          content: 'Ask me about the fastest, cheapest, or least-transfer route in Benha.',
+          content:
+              'Ask me about the fastest, cheapest, or least-transfer route in Benha.',
           createdAt: DateTime.now(),
           isSystem: true,
         ),
@@ -70,66 +82,275 @@ class ChatController extends ChangeNotifier {
 
   Future<void> ask({
     required String prompt,
-    required List<TransitRouteOption> alternatives,
-    String? origin,
-    String? destination,
+    required TripPlanResult plan,
   }) async {
-    if (prompt.trim().isEmpty) {
+    final normalizedPrompt = prompt.trim();
+    if (normalizedPrompt.isEmpty) {
       return;
     }
 
-    final userMsg = ChatMessage(role: 'user', content: prompt.trim(), createdAt: DateTime.now());
+    final recentContext = _recentTurns();
+    final userMsg = ChatMessage(
+      role: 'user',
+      content: normalizedPrompt,
+      createdAt: DateTime.now(),
+    );
     _messages = [..._messages, userMsg];
     _phase = ChatPhase.analyzingInput;
     notifyListeners();
 
     try {
+      if (!_isTransitScoped(normalizedPrompt, recentContext)) {
+        await _appendAssistant(
+          _scopeApology(normalizedPrompt),
+          isSystem: true,
+          persist: true,
+        );
+        return;
+      }
+
       // Only persist user message on client side if we are calling Gemini API directly.
       // If we use the Railway backend, it handles database persistence internally.
       if (_aiAgentService.isGeminiDirect) {
         await ChatPersistenceService.saveMessage(
           username: _username,
-          message: prompt.trim(),
+          message: normalizedPrompt,
           isUser: true,
         );
       }
 
       final result = await _aiAgentService.generateAdvice(
-        userRequest: prompt,
-        alternatives: alternatives,
-        origin: origin,
-        destination: destination,
+        userRequest: normalizedPrompt,
+        plan: plan,
+        recentContext: recentContext,
       );
 
       _lastResponse = result.reply;
-      final assistantMsg = ChatMessage(
-        role: 'assistant',
-        content: result.reply,
-        createdAt: DateTime.now(),
-        isSystem: result.usedFallback,
-      );
-      _messages = [..._messages, assistantMsg];
-      
-      // Only persist assistant message on client side if we are calling Gemini API directly.
-      if (_aiAgentService.isGeminiDirect) {
-        await ChatPersistenceService.saveMessage(
-          username: _username,
-          message: result.reply,
-          isUser: false,
-        );
-      }
+      await _appendAssistant(result.reply, isSystem: result.usedFallback);
     } catch (e) {
-      print('Error in ChatController.ask: $e');
-      final errorMsg = ChatMessage(
-        role: 'assistant',
-        content: 'Sorry, I couldn\'t connect to the server. Please check your network and try again.',
-        createdAt: DateTime.now(),
+      debugPrint('Error in ChatController.ask: $e');
+      await _appendAssistant(
+        _aiAgentService.localRouteSummary(normalizedPrompt, plan),
         isSystem: true,
       );
-      _messages = [..._messages, errorMsg];
     } finally {
       _phase = ChatPhase.readyForQAndA;
       notifyListeners();
     }
   }
+
+  List<ChatMessage> _recentTurns() {
+    final chatOnly = _messages.where((message) => !message.isSystem).toList();
+    return chatOnly
+        .skip(chatOnly.length > 6 ? chatOnly.length - 6 : 0)
+        .toList();
+  }
+
+  Future<void> _appendAssistant(
+    String reply, {
+    bool isSystem = false,
+    bool persist = false,
+  }) async {
+    _lastResponse = reply;
+    _messages = [
+      ..._messages,
+      ChatMessage(
+        role: 'assistant',
+        content: reply,
+        createdAt: DateTime.now(),
+        isSystem: isSystem,
+      ),
+    ];
+
+    if (_aiAgentService.isGeminiDirect || persist) {
+      await ChatPersistenceService.saveMessage(
+        username: _username,
+        message: reply,
+        isUser: false,
+      );
+    }
+  }
+
+  bool _isTransitScoped(String prompt, List<ChatMessage> recentContext) {
+    final text = prompt.toLowerCase();
+
+    const transitTerms = <String>[
+      'route',
+      'routes',
+      'trip',
+      'transport',
+      'transit',
+      'microbus',
+      'bus',
+      'train',
+      'station',
+      'terminal',
+      'fare',
+      'cost',
+      'price',
+      'time',
+      'eta',
+      'fastest',
+      'cheapest',
+      'nearest',
+      'transfer',
+      'benha',
+      'qalyubia',
+      'go',
+      'travel',
+      'how',
+      'get to',
+      'where',
+      'stop',
+      'ticket',
+      'cairo',
+      'giza',
+      'alex',
+      'mansoura',
+      'tanta',
+      'gamasa',
+      'damietta',
+      'zagazig',
+      'monufia',
+      'menofia',
+      'sharqia',
+      'gharbia',
+      'dakahlia',
+      'beheira',
+      'kafr',
+      'ismailia',
+      'suez',
+      'port said',
+      'fayoum',
+      'minya',
+      'assiut',
+      'sohag',
+      'qena',
+      'luxor',
+      'aswan',
+      'مواصل',
+      'طريق',
+      'سفر',
+      'رحل',
+      'مشوار',
+      'ميكرو',
+      'مكرو',
+      'باص',
+      'اتوبيس',
+      'أتوبيس',
+      'سوزوكي',
+      'سوزوكى',
+      'قطار',
+      'قطر',
+      'محط',
+      'موقف',
+      'أجر',
+      'اجر',
+      'تكلف',
+      'سعر',
+      'أسعار',
+      'اسعار',
+      'تذكر',
+      'وقت',
+      'أسرع',
+      'اسرع',
+      'أرخص',
+      'ارخص',
+      'أقرب',
+      'اقرب',
+      'تحويل',
+      'بنها',
+      'قليوب',
+      'جمص',
+      'بلطيم',
+      'منصور',
+      'دمياط',
+      'اسكندر',
+      'إسكندر',
+      'قاهر',
+      'جيز',
+      'طنطا',
+      'زقازيق',
+      'شيبين',
+      'شبين',
+      'منوف',
+      'محل',
+      'فيوم',
+      'سويس',
+      'اسماعيل',
+      'إسماعيل',
+      'بورسعيد',
+      'عريش',
+      'شرق',
+      'غرب',
+      'دقهل',
+      'بحير',
+      'كفر',
+      'ذهاب',
+      'الذهاب',
+      'ذاهب',
+      'اذهب',
+      'أذهب',
+      'اروح',
+      'أروح',
+      'روح',
+      'اوصل',
+      'أوصل',
+      'وصل',
+      'كيف',
+      'ازاي',
+      'إزاي',
+      'فين',
+      'ليه',
+      'متى',
+      'امتى',
+      'إمتى',
+      'كام',
+      'بكام',
+      'كم',
+      'بلد',
+      'بلاد',
+      'محافظ',
+      'مدين',
+      'قرية',
+      'قريه',
+      'مركز',
+      'شارع',
+      'حي',
+      'حى',
+      'ميدان',
+    ];
+
+    if (transitTerms.any(text.contains)) {
+      return true;
+    }
+
+    const followUpTerms = <String>[
+      'how much',
+      'how long',
+      'what about',
+      'and',
+      'there',
+      'it',
+      'كم',
+      'كام',
+      'بكام',
+      'قد ايه',
+      'قد إيه',
+      'ازاي',
+      'إزاي',
+      'اروح',
+      'أروح',
+    ];
+
+    return recentContext.isNotEmpty && followUpTerms.any(text.contains);
+  }
+
+  String _scopeApology(String prompt) {
+    return _prefersArabic(prompt)
+        ? kTransitScopeApologyAr
+        : kTransitScopeApologyEn;
+  }
+
+  bool _prefersArabic(String text) => RegExp(r'[\u0600-\u06FF]').hasMatch(text);
 }

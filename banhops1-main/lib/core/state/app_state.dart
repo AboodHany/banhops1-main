@@ -10,7 +10,7 @@ class AppState extends ChangeNotifier {
   Locale? _locale;
   bool _isReady = false;
   bool _guestMode = false;
-  ThemeMode _themeMode = ThemeMode.system;
+  ThemeMode _themeMode = ThemeMode.light;
 
   Locale? get locale => _locale;
   bool get isReady => _isReady;
@@ -22,11 +22,7 @@ class AppState extends ChangeNotifier {
       final savedLang = await _storageService.getLang();
       _locale = savedLang == null ? null : Locale(savedLang);
       final savedTheme = await _storageService.getThemeMode();
-      _themeMode = savedTheme == 'dark'
-          ? ThemeMode.dark
-          : savedTheme == 'light'
-              ? ThemeMode.light
-              : ThemeMode.system;
+      _themeMode = savedTheme == 'dark' ? ThemeMode.dark : ThemeMode.light;
     } finally {
       _isReady = true;
       notifyListeners();

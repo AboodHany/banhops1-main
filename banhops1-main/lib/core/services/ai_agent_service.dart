@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 
 import '../config/app_config.dart';
+import '../models/chat_message.dart';
 import '../models/transit_enums.dart';
 import '../models/transit_route_option.dart';
 import 'user_session.dart';
@@ -24,145 +26,110 @@ class AiAgentService {
   final AppConfig _config;
 
   bool get isGeminiDirect {
-    return _config.aiAgentBaseUrl.contains('generativelanguage.googleapis.com') ||
-           (_config.aiAgentApiKey.isNotEmpty && 
-            !_config.aiAgentBaseUrl.contains('railway') && 
+    return _config.aiAgentBaseUrl.contains(
+          'generativelanguage.googleapis.com',
+        ) ||
+        (_config.aiAgentApiKey.isNotEmpty &&
+            !_config.aiAgentBaseUrl.contains('railway') &&
             !_config.aiAgentBaseUrl.contains('api/chat'));
   }
 
   Future<AiAgentResult> generateAdvice({
     required String userRequest,
-    required List<TransitRouteOption> alternatives,
-    String? origin,
-    String? destination,
-    Map<String, dynamic> userPreferences = const <String, dynamic>{},
+    required TripPlanResult plan,
+    List<ChatMessage> recentContext = const <ChatMessage>[],
   }) async {
     final username = await UserSession.getUsername();
-
-    // Determine if we should call Gemini API directly.
+    final compactPlan = _compactPlan(plan);
     final isGeminiDirect = this.isGeminiDirect;
 
     final payload = <String, dynamic>{
       'message': userRequest,
-      'origin': origin,
-      'destination': destination,
-      'alternatives': alternatives.map((route) => route.toJson()).toList(),
-      'preferences': userPreferences,
-      'context': _buildContext(userRequest, alternatives, origin, destination, userPreferences),
+      'plan': compactPlan,
+      if (recentContext.isNotEmpty)
+        'recentContext': _compactRecentTurns(recentContext),
     };
 
     try {
       Uri uri;
       Map<String, dynamic> requestBody;
-      Map<String, String> headers = {"Content-Type": "application/json"};
+      final headers = <String, String>{'Content-Type': 'application/json'};
 
       if (isGeminiDirect) {
-        final baseUrl = _config.aiAgentBaseUrl.isNotEmpty && 
-                       _config.aiAgentBaseUrl.contains('generativelanguage.googleapis.com')
+        final baseUrl =
+            _config.aiAgentBaseUrl.isNotEmpty &&
+                _config.aiAgentBaseUrl.contains(
+                  'generativelanguage.googleapis.com',
+                )
             ? _config.aiAgentBaseUrl
-            : 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent';
-        
+            : 'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent';
+
         uri = Uri.parse(baseUrl);
         if (_config.aiAgentApiKey.isNotEmpty) {
           uri = uri.replace(queryParameters: {'key': _config.aiAgentApiKey});
         }
 
-        final systemInstructionText = _getSystemInstruction();
-        final userText = _buildGeminiUserPrompt(userRequest, alternatives, origin, destination, userPreferences);
-        
-        requestBody = {
+        requestBody = <String, dynamic>{
           'systemInstruction': {
             'parts': [
-              {'text': systemInstructionText}
-            ]
+              {'text': _getSystemInstruction()},
+            ],
           },
-          'contents': [
-            {
-              'role': 'user',
-              'parts': [
-                {'text': userText}
-              ]
-            }
-          ]
+          'contents': _buildGeminiContents(
+            userRequest: userRequest,
+            plan: compactPlan,
+            recentContext: recentContext,
+          ),
         };
       } else {
-        uri = Uri.parse(_config.aiAgentBaseUrl.isNotEmpty 
-            ? _config.aiAgentBaseUrl 
-            : "https://banhops-backend-production.up.railway.app/api/chat/send");
-        
+        uri = Uri.parse(
+          _config.aiAgentBaseUrl.isNotEmpty
+              ? _config.aiAgentBaseUrl
+              : '${_config.backendBaseUrl}/api/chat/send',
+        );
+
         if (_config.aiAgentApiKey.isNotEmpty) {
           headers['Authorization'] = 'Bearer ${_config.aiAgentApiKey}';
         }
 
-        final instruction = 'IMPORTANT INSTRUCTION: ONLY answer if the user message is about transportation, routes, stations, microbuses, trains, costs, or transit in Benha/Qalyubia. If it is NOT related (e.g. sports like "Egypt or Senegal", politics, programming, cooking, general knowledge, etc.), you MUST decline to answer. Directly say: "عذراً، أنا مساعد ذكي مخصص للإجابة على استفسارات مواصلات وطرق بنها والقليوبية فقط. كيف يمكنني مساعدتك في رحلتك اليوم؟" and do not say anything else.';
-        
-        // Inject all route options into context so the backend LLM can see them
-        String contextInfo = '';
-        if (alternatives.isNotEmpty) {
-          final routesText = alternatives.map((r) => '${r.title} (${getTransitModeLabel(r.mode)}, cost: ${r.estimatedCost} EGP, duration: ${r.durationMinutes} minutes)').join(', ');
-          contextInfo = ' [Available route alternatives: $routesText]';
-        }
-        
-        final fromParam = origin != null ? '$origin$contextInfo ($instruction)' : '$instruction$contextInfo';
-
-        final bestAlternative = alternatives.isNotEmpty ? alternatives.first : null;
-        requestBody = {
-          "username": username,
-          "message": userRequest,
-          "from": fromParam,
-          if (destination != null) "to": destination,
-          if (bestAlternative != null) "transportMode": getTransitModeLabel(bestAlternative.mode),
-          if (bestAlternative != null) "costMin": bestAlternative.estimatedCost.toString(),
-          if (bestAlternative != null) "costMax": bestAlternative.estimatedCost.toString(),
-          "timeMin": "0",
-          if (bestAlternative != null) "timeMax": bestAlternative.durationMinutes.toString(),
+        requestBody = <String, dynamic>{
+          'username': username,
+          'message': userRequest,
+          'language': _languageCode(userRequest),
+          'from': compactPlan['origin'],
+          'to': compactPlan['destination'],
+          'transportMode': compactPlan['mode'],
+          'costMin': compactPlan['costEgp'].toString(),
+          'costMax': compactPlan['costEgp'].toString(),
+          'timeMax': compactPlan['etaMin'].toString(),
         };
       }
 
-      final response = await http.post(
-        uri,
-        headers: headers,
-        body: jsonEncode(requestBody),
-      ).timeout(const Duration(seconds: 12));
+      final response = await http
+          .post(uri, headers: headers, body: jsonEncode(requestBody))
+          .timeout(const Duration(seconds: 12));
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final decoded = jsonDecode(response.body);
-        String reply;
-        
-        if (isGeminiDirect) {
-          try {
-            reply = decoded['candidates'][0]['content']['parts'][0]['text'].toString().trim();
-          } catch (e) {
-            print('Error parsing Gemini direct response: $e. Body: ${response.body}');
-            reply = _fallbackResponse(userRequest, alternatives);
-          }
-        } else {
-          final responseMap = decoded is Map<String, dynamic> ? decoded : <String, dynamic>{'response': decoded.toString()};
-          reply = responseMap['reply']?.toString().trim().isNotEmpty == true
-              ? responseMap['reply'].toString().trim()
-              : responseMap['response']?.toString().trim().isNotEmpty == true
-                  ? responseMap['response'].toString().trim()
-                  : responseMap['message']?.toString().trim().isNotEmpty == true
-                      ? responseMap['message'].toString().trim()
-                      : _fallbackResponse(userRequest, alternatives);
-        }
+        final reply = isGeminiDirect
+            ? _parseGeminiReply(decoded, userRequest, plan)
+            : _parseBackendReply(decoded, userRequest, plan);
 
         return AiAgentResult(
           reply: reply,
-          rawPayload: decoded is Map<String, dynamic> ? decoded : <String, dynamic>{'response': decoded},
+          rawPayload: decoded is Map<String, dynamic>
+              ? decoded
+              : <String, dynamic>{'response': decoded},
           usedFallback: false,
         );
       }
-      
-      throw Exception("AI API Error ${response.statusCode}");
+
+      throw Exception('AI API Error ${response.statusCode}');
     } catch (e) {
-      print('Error during AI agent generation: $e');
+      developer.log('Error during AI agent generation', error: e);
       return AiAgentResult(
-        reply: _fallbackResponse(userRequest, alternatives),
-        rawPayload: {
-          ...payload,
-          'error': e.toString(),
-        },
+        reply: localRouteSummary(userRequest, plan),
+        rawPayload: {...payload, 'error': e.toString()},
         usedFallback: true,
       );
     }
@@ -179,97 +146,128 @@ class AiAgentService {
     }
   }
 
-  String _getSystemInstruction() {
-    return '''أنت "بنهوبس AI" - مساعد رحلات ومواصلات ذكي لمحافظة القليوبية ومدينة بنها وضواحيها.
-مهمتك الأساسية هي تزويد المستخدمين بإرشادات تفصيلية، دقيقة، ومفيدة حول وسائل النقل والتكلفة وأفضل الطرق والربط بين المحطات بناءً على الخيارات المتاحة.
-
-قواعد هامة جداً عن حركة المواصلات المحلية والداخلية في بنها يجب أن تفهمها وتصيغ إجاباتك بناءً عليها:
-1. الوجهات الـ 10 المتاحة في مدينة بنها هي:
-   - موقف بنها (الموقف الرئيسي ميكروباصات لكل المحافظات).
-   - محطة قطار بنها (السكة الحديد).
-   - مجمع الكليات (كلية تجارة - كلية اداب).
-   - إدارة الجامعة.
-   - كلية طب ومستشفى الجامعة وكورنيش النيل (إشارة).
-   - منطقة الأهرام.
-   - كوبري (بنها القديمة).
-   - كلية الحقوق.
-   - المدينة الجامعية.
-   - منطقة الفلل.
-2. قاعدة السوزوكي الداخلي (أجرة 5 جنيه):
-   - للذهاب لأي مقصد من المقاصد الداخلية (مجمع الكليات، إدارة الجامعة، منطقة الأهرام، كلية الحقوق، إلخ): يسافر الراكب بميكروباص للموقف أولاً، ثم يستقل "سوزوكي داخلي" من الموقف للوجهة المحددة بأجرة ثابتة 5 جنيه.
-   - استثناء محطة قطار بنها: إذا كان قادماً بالقطار، فإنه ينزل في "محطة قطار بنها" مباشرة دون الحاجة للذهاب للموقف أو دفع 5 جنيه للسوزوكي. أما إذا كان قادماً بميكروباص، فيصل للموقف أولاً ثم يستقل سوزوكي داخلي بـ 5 جنيه للمحطة.
-3. القرى والمناطق الفرعية:
-   - جميع القرى الفرعية بالقليوبية والمنوفية (مثل دجوى، طحلة، بطا، العمار، بلتان، برشوم، ميت بره، مشيرف، إلخ) تظهر في قائمة "المدينة/المنطقة". وضح لهم أن لها مواصلات ميكروباص محلية ومباشرة من موقف بنها.
-
-قاعدة أساسية وصارمة حول نطاق الأسئلة:
-- يجب عليك عدم الإجابة على أي أسئلة ليس لها علاقة بمشروع "بنهوبس" أو مواصلات بنها والقليوبية والرحلات والاتجاهات والطرق والأسعار.
-- إذا سألك المستخدم عن أي موضوع خارج هذا النطاق (مثل: البرمجة، الطبخ، العلوم والتاريخ، الترجمة العامة، الترفيه، أو أي أسئلة عامة أخرى)، يجب عليك رفض الإجابة بلطف واعتذر له بوضوح موضحاً أنك مساعد ذكي مخصص فقط لمساعدة المستخدمين في الاستفسار عن طرق ومواصلات بنها وضواحيها.
-
-عند الإجابة:
-- كن ودوداً ومرحباً، تحدث بلهجة مصرية مهذبة ومحببة أو لغة عربية سهلة وواضحة.
-- قم بتحليل بدائل المسارات المتاحة المرفقة وقارن بينها لتنصح المستخدم بالخيار الأفضل (مثلاً: "الخيار الأول أرخص لكن الخيار الثاني أسرع...") ووضح له خطوات التحويل.
-- إذا لم تكن هناك خيارات سير متاحة في البيانات المرفقة, اقترح عليه حلولاً عامة ذكية وتوجيهات منطقية للوصول للموقف ثم ركوب السوزوكي الداخلي للوجهة.''';
-  }
-
-  String _buildGeminiUserPrompt(
-    String userRequest,
-    List<TransitRouteOption> alternatives,
-    String? origin,
-    String? destination,
-    Map<String, dynamic> userPreferences,
-  ) {
-    final buffer = StringBuffer()
-      ..writeln('تنبيه صارم جداً للنموذج: يجب عليك فحص سؤال المستخدم. إذا كان سؤال المستخدم ليس له علاقة بمواصلات وطرق وأسعار بنها والقليوبية (مثل مقارنة الفرق الرياضية، البرمجة، الأسئلة العامة)، يجب عليك فوراً رفض الإجابة والاعتذار بلطف بصيغة محددة كالتالي دون إعطاء أي معلومات أو آراء عن السؤال الخارجي: "عذراً، أنا مساعد ذكي مخصص للإجابة على استفسارات مواصلات وطرق بنها والقليوبية فقط. كيف يمكنني مساعدتك في رحلتك اليوم؟".')
-      ..writeln('سؤال المستخدم الحالي: $userRequest')
-      ..writeln('مكان البداية (Origin): ${origin ?? 'غير محدد'}')
-      ..writeln('المقصد النهائي في بنها (Destination): ${destination ?? 'غير محدد'}')
-      ..writeln('بدائل الطرق المتاحة المحتسبة حالياً في الكود:');
-
-    if (alternatives.isEmpty) {
-      buffer.writeln('لا توجد خيارات مسارات مباشرة محتسبة في قاعدة البيانات.');
-    } else {
-      for (final route in alternatives) {
-        buffer.writeln(
-          '- البديل: ${route.title} | وسيلة النقل: ${getTransitModeLabel(route.mode)} | التكلفة: ${route.estimatedCost} جنيه | عدد التحويلات: ${route.transfers} | تفاصيل المسار: ${route.details}'
-        );
+  String localRouteSummary(String userRequest, TripPlanResult plan) {
+    final useArabic = _prefersArabic(userRequest);
+    final best = plan.routes.isNotEmpty ? plan.routes.first : null;
+    if (best == null) {
+      if (!useArabic) {
+        return 'I checked your question: $userRequest\nNo route is currently available between ${plan.originLabel} and ${plan.destinationLabel}. Try changing the origin or destination.';
       }
+      return 'حللت سؤالك: $userRequest\nمفيش مسار متاح حالياً بين ${plan.originLabel} و ${plan.destinationLabel}. جرّب تغيّر نقطة البداية أو المقصد.';
     }
-    return buffer.toString();
+
+    if (!useArabic) {
+      return 'I checked your question: $userRequest\n'
+          'Best current route from ${plan.originLabel} to ${plan.destinationLabel}: ${best.title}\n'
+          'Mode: ${getTransitModeLabel(best.mode)}\n'
+          'ETA: ${best.durationMinutes} minutes\n'
+          'Fare: ${best.estimatedCost.toStringAsFixed(1)} EGP\n'
+          'Transfers: ${best.transfers}';
+    }
+
+    return 'حللت سؤالك: $userRequest\n'
+        'أنسب مسار حالياً من ${plan.originLabel} إلى ${plan.destinationLabel}: ${best.title}\n'
+        'الوسيلة: ${getTransitModeLabel(best.mode)}\n'
+        'الوقت المتوقع: ${best.durationMinutes} دقيقة\n'
+        'التكلفة: ${best.estimatedCost.toStringAsFixed(1)} جنيه\n'
+        'التحويلات: ${best.transfers}';
   }
 
-  String _buildContext(
+  String _getSystemInstruction() {
+    return 'You are Banhops AI, a helpful transit and travel assistant for Egypt. You can answer transit, routes, fares, and travel questions about any city in Egypt (such as Benha, Qalyubia, Cairo, Gamasa, Mansoura, etc.). If the user asks about the currently planned trip, use the provided trip context (origin, destination, mode, ETA, fare) as reference. If they ask about other locations, routes, or general travel, feel free to use your own knowledge to guide them accurately, warmly, and briefly. Reply in the same language as the latest user question: Arabic if Arabic, English if English. Mention internal Suzuki fare is 5 EGP when relevant.';
+  }
+
+  String _parseGeminiReply(
+    dynamic decoded,
     String userRequest,
-    List<TransitRouteOption> alternatives,
-    String? origin,
-    String? destination,
-    Map<String, dynamic> userPreferences,
+    TripPlanResult plan,
   ) {
-    final buffer = StringBuffer()
-      ..writeln('User request: $userRequest')
-      ..writeln('Origin: ${origin ?? 'unknown'}')
-      ..writeln('Destination: ${destination ?? 'unknown'}')
-      ..writeln('Preferences: ${jsonEncode(userPreferences)}')
-      ..writeln('Available routes:');
-
-    for (final route in alternatives) {
-      buffer
-        ..writeln('- ${route.title} | mode=${getTransitModeLabel(route.mode)} | duration=${route.durationMinutes} min | cost=${route.estimatedCost} EGP | transfers=${route.transfers} | score=${route.score.toStringAsFixed(3)}');
+    try {
+      return decoded['candidates'][0]['content']['parts'][0]['text']
+          .toString()
+          .trim();
+    } catch (e) {
+      developer.log('Error parsing Gemini direct response', error: e);
+      return localRouteSummary(userRequest, plan);
     }
-
-    return buffer.toString();
   }
 
-  String _fallbackResponse(String userRequest, List<TransitRouteOption> alternatives) {
-    final best = alternatives.isNotEmpty ? alternatives.first : null;
-    final buffer = StringBuffer()
-      ..writeln('I analyzed your request: $userRequest')
-      ..writeln('')
-      ..writeln('Recommended route: ${best?.title ?? 'No route data available'}')
-      ..writeln('ETA: ${best?.durationMinutes ?? 0} minutes')
-      ..writeln('Fare: ${best?.estimatedCost.toStringAsFixed(2) ?? '0.00'} EGP')
-      ..writeln('Transfers: ${best?.transfers ?? 0}')
-      ..writeln('')
-      ..writeln('Smart Insight: choose the fastest route if you are prioritizing punctuality, otherwise the cheapest route saves fare with a small time tradeoff.');
-    return buffer.toString();
+  String _parseBackendReply(
+    dynamic decoded,
+    String userRequest,
+    TripPlanResult plan,
+  ) {
+    final responseMap = decoded is Map<String, dynamic>
+        ? decoded
+        : <String, dynamic>{'response': decoded.toString()};
+    final reply = responseMap['reply']?.toString().trim();
+    final response = responseMap['response']?.toString().trim();
+    final message = responseMap['message']?.toString().trim();
+
+    if (reply != null && reply.isNotEmpty) return reply;
+    if (response != null && response.isNotEmpty) return response;
+    if (message != null && message.isNotEmpty) return message;
+    return localRouteSummary(userRequest, plan);
   }
+
+  Map<String, dynamic> _compactPlan(TripPlanResult plan) {
+    final best = plan.routes.isNotEmpty ? plan.routes.first : null;
+    return <String, dynamic>{
+      'origin': plan.originLabel,
+      'destination': plan.destinationLabel,
+      'mode': best == null ? 'unknown' : getTransitModeLabel(best.mode),
+      'etaMin': best?.durationMinutes ?? 0,
+      'costEgp': best?.estimatedCost ?? 0,
+    };
+  }
+
+  List<Map<String, String>> _compactRecentTurns(
+    List<ChatMessage> recentContext,
+  ) {
+    final chatOnly = recentContext
+        .where((message) => !message.isSystem)
+        .toList();
+    final window = chatOnly.skip(chatOnly.length > 6 ? chatOnly.length - 6 : 0);
+    return window
+        .map(
+          (message) => <String, String>{
+            'role': message.role == 'assistant' ? 'model' : 'user',
+            'text': message.content.trim(),
+          },
+        )
+        .where((message) => message['text']!.isNotEmpty)
+        .toList();
+  }
+
+  List<Map<String, dynamic>> _buildGeminiContents({
+    required String userRequest,
+    required Map<String, dynamic> plan,
+    required List<ChatMessage> recentContext,
+  }) {
+    final contents = _compactRecentTurns(recentContext)
+        .map(
+          (message) => <String, dynamic>{
+            'role': message['role'],
+            'parts': [
+              {'text': message['text']},
+            ],
+          },
+        )
+        .toList();
+
+    contents.add({
+      'role': 'user',
+      'parts': [
+        {
+          'text':
+              'Language: ${_languageCode(userRequest)}\nQ: $userRequest\nTrip: ${jsonEncode(plan)}',
+        },
+      ],
+    });
+    return contents;
+  }
+
+  String _languageCode(String text) => _prefersArabic(text) ? 'ar' : 'en';
+
+  bool _prefersArabic(String text) => RegExp(r'[\u0600-\u06FF]').hasMatch(text);
 }

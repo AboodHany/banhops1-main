@@ -12,13 +12,12 @@ class AuthService {
   AuthService(this._config);
 
   final AppConfig _config;
-  static const String _baseUrl = 'https://banhops-backend-production.up.railway.app';
 
   Future<AppUserProfile> signIn({
     required String username,
     required String password,
   }) async {
-    final url = Uri.parse('$_baseUrl/api/auth/login');
+    final url = Uri.parse('${_config.backendBaseUrl}/api/auth/login');
 
     final response = await http.post(
       url,
@@ -87,7 +86,7 @@ class AuthService {
     required String phone,
     required String password,
   }) async {
-    final url = Uri.parse('$_baseUrl/api/auth/signup');
+    final url = Uri.parse('${_config.backendBaseUrl}/api/auth/signup');
 
     final response = await http.post(
       url,

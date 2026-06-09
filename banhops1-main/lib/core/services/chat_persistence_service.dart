@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ChatPersistenceService {
-  static const String _baseUrl =
+  static String baseUrl =
       'https://banhops-backend-production.up.railway.app';
 
   static Future<void> saveMessage({
@@ -11,7 +11,7 @@ class ChatPersistenceService {
     required bool isUser,
   }) async {
     try {
-      final url = Uri.parse('$_baseUrl/api/chat');
+      final url = Uri.parse('$baseUrl/api/chat');
 
       await http.post(
         url,
@@ -30,7 +30,7 @@ class ChatPersistenceService {
   static Future<List<Map<String, dynamic>>> getMessages(
       String username) async {
     try {
-      final url = Uri.parse('$_baseUrl/api/chat/$username');
+      final url = Uri.parse('$baseUrl/api/chat/$username');
 
       final response = await http.get(url).timeout(const Duration(seconds: 5));
 
@@ -46,7 +46,7 @@ class ChatPersistenceService {
 
   static Future<void> clearChat(String username) async {
     try {
-      final url = Uri.parse('$_baseUrl/api/chat/$username');
+      final url = Uri.parse('$baseUrl/api/chat/$username');
       await http.delete(url).timeout(const Duration(seconds: 5));
     } catch (e) {
       print('Error clearing chat in ChatPersistenceService: $e');

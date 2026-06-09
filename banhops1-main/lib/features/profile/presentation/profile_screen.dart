@@ -89,6 +89,26 @@ class ProfileScreen extends StatelessWidget {
                         appState.setLocale(nextLang);
                       },
                     ),
+                    ListTile(
+                      leading: Icon(
+                        appState.themeMode == ThemeMode.dark
+                            ? Icons.dark_mode_rounded
+                            : Icons.light_mode_rounded,
+                      ),
+                      title: Text(localization.translate('theme')),
+                      trailing: Text(
+                        appState.themeMode == ThemeMode.dark
+                            ? localization.translate('dark_mode')
+                            : localization.translate('light_mode'),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      onTap: () {
+                        appState.toggleThemeMode();
+                      },
+                    ),
                     SwitchListTile(
                       value: profile?.isGuest ?? true,
                       onChanged: (_) {},

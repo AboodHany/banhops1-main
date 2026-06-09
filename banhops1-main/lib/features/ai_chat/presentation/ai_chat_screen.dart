@@ -45,7 +45,10 @@ class _AIChatScreenState extends State<AIChatScreen> {
     }
   }
 
-  void _confirmClearChat(ChatController chat, AppLocalizations localization) async {
+  void _confirmClearChat(
+    ChatController chat,
+    AppLocalizations localization,
+  ) async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
@@ -59,7 +62,10 @@ class _AIChatScreenState extends State<AIChatScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(localization.translate('clear'), style: const TextStyle(color: Colors.red)),
+            child: Text(
+              localization.translate('clear'),
+              style: const TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),
@@ -87,7 +93,11 @@ class _AIChatScreenState extends State<AIChatScreen> {
         title: Text(localization.translate('ai_assistant')),
         actions: [
           TextButton.icon(
-            icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
+            icon: const Icon(
+              Icons.delete_outline_rounded,
+              color: Colors.redAccent,
+              size: 20,
+            ),
             label: Text(
               localization.translate('clear_chat_button'),
               style: const TextStyle(
@@ -114,11 +124,17 @@ class _AIChatScreenState extends State<AIChatScreen> {
                 }
                 final message = chat.messages[index];
                 final isUser = message.role == 'user';
-                final parsedRoute = !isUser ? _parseRouteFromText(message.content) : null;
-                final displayText = isUser ? message.content : _cleanMessageText(message.content);
+                final parsedRoute = !isUser
+                    ? _parseRouteFromText(message.content)
+                    : null;
+                final displayText = isUser
+                    ? message.content
+                    : _cleanMessageText(message.content);
 
                 return Align(
-                  alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+                  alignment: isUser
+                      ? Alignment.centerRight
+                      : Alignment.centerLeft,
                   child: Container(
                     margin: const EdgeInsets.only(bottom: 10),
                     padding: const EdgeInsets.all(14),
@@ -147,10 +163,13 @@ class _AIChatScreenState extends State<AIChatScreen> {
                           Text(
                             displayText,
                             style: TextStyle(
-                              color: isUser ? Colors.white : const Color(0xFF1A1F2B),
+                              color: isUser
+                                  ? Colors.white
+                                  : const Color(0xFF1A1F2B),
                             ),
                           ),
-                        if (parsedRoute != null) _ChatRouteCard(route: parsedRoute),
+                        if (parsedRoute != null)
+                          _ChatRouteCard(route: parsedRoute),
                       ],
                     ),
                   ),
@@ -172,7 +191,9 @@ class _AIChatScreenState extends State<AIChatScreen> {
                   ])
                     ActionChip(
                       label: Text(chip),
-                      onPressed: isTyping ? null : () => _sendPrompt(context, chip, plan),
+                      onPressed: isTyping
+                          ? null
+                          : () => _sendPrompt(context, chip, plan),
                     ),
                 ],
               ),
@@ -189,7 +210,9 @@ class _AIChatScreenState extends State<AIChatScreen> {
                       decoration: InputDecoration(
                         hintText: localization.translate('ask_anything_hint'),
                       ),
-                      onSubmitted: isTyping ? null : (_) => _sendPrompt(context, _controller.text, plan),
+                      onSubmitted: isTyping
+                          ? null
+                          : (_) => _sendPrompt(context, _controller.text, plan),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -201,7 +224,10 @@ class _AIChatScreenState extends State<AIChatScreen> {
                         ? const SizedBox(
                             width: 18,
                             height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
                           )
                         : const Icon(Icons.send_rounded),
                   ),
@@ -214,18 +240,17 @@ class _AIChatScreenState extends State<AIChatScreen> {
     );
   }
 
-  Future<void> _sendPrompt(BuildContext context, String prompt, TripPlanResult plan) async {
+  Future<void> _sendPrompt(
+    BuildContext context,
+    String prompt,
+    TripPlanResult plan,
+  ) async {
     final normalized = prompt.trim();
     if (normalized.isEmpty) {
       return;
     }
     _controller.clear();
-    await context.read<ChatController>().ask(
-          prompt: normalized,
-          alternatives: plan.routes,
-          origin: plan.originLabel,
-          destination: plan.destinationLabel,
-        );
+    await context.read<ChatController>().ask(prompt: normalized, plan: plan);
   }
 }
 
@@ -236,7 +261,8 @@ class _TypingBubble extends StatefulWidget {
   State<_TypingBubble> createState() => _TypingBubbleState();
 }
 
-class _TypingBubbleState extends State<_TypingBubble> with SingleTickerProviderStateMixin {
+class _TypingBubbleState extends State<_TypingBubble>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl;
 
   @override
@@ -433,14 +459,22 @@ class _ChatRouteCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    const Icon(Icons.access_time_rounded, size: 14, color: Colors.grey),
+                    const Icon(
+                      Icons.access_time_rounded,
+                      size: 14,
+                      color: Colors.grey,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       '${route.timeMin}-${route.timeMax} ${localization.translate('min')}',
                       style: const TextStyle(fontSize: 13, color: Colors.grey),
                     ),
                     const SizedBox(width: 12),
-                    const Icon(Icons.payments_outlined, size: 14, color: Colors.grey),
+                    const Icon(
+                      Icons.payments_outlined,
+                      size: 14,
+                      color: Colors.grey,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       '${route.costMin}-${route.costMax} ${localization.translate('egp')}',
