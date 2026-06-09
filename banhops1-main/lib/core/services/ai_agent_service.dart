@@ -80,6 +80,11 @@ class AiAgentService {
             plan: compactPlan,
             recentContext: recentContext,
           ),
+          'tools': [
+            {
+              'googleSearch': {},
+            }
+          ],
         };
       } else {
         uri = Uri.parse(
