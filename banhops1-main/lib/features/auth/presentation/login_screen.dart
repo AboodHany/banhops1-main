@@ -51,15 +51,26 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     const SizedBox(height: 32),
                     Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF0F4C81).withAlpha(20),
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 10,
+                          ),
+                        ],
                       ),
-                      child: const Icon(
-                        Icons.directions_bus_filled_rounded,
-                        size: 48,
-                        color: Color(0xFF0F4C81),
+                      child: Image.asset(
+                        'assets/images/logo.png',
+                        height: 80,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) => const Icon(
+                          Icons.directions_bus_filled_rounded,
+                          size: 48,
+                          color: Color(0xFF0F4C81),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 28),
@@ -78,7 +89,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Sign in to compare train, public bus, and microbus routes across Benha.',
+                      localization.translate('login_intro_subtitle'),
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: Colors.grey[600],
                           ),
@@ -91,7 +102,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           TextFormField(
                             controller: _usernameController,
                             decoration: InputDecoration(
-                              labelText: 'Username',
+                              labelText: localization.translate('username'),
                               prefixIcon: const Icon(Icons.person_outline_rounded),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -99,10 +110,10 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
-                                return 'Username is required';
+                                return localization.translate('username_required');
                               }
                               if (value.trim().length < 4) {
-                                return 'Username must be at least 4 characters';
+                                return localization.translate('username_length_error');
                               }
                               return null;
                             },
@@ -130,10 +141,10 @@ class _LoginScreenState extends State<LoginScreen> {
                             obscureText: _obscurePassword,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Password is required';
+                                return localization.translate('password_required');
                               }
                               if (value.length < 8) {
-                                return 'Password must be at least 8 characters';
+                                return localization.translate('password_length_error');
                               }
                               return null;
                             },
@@ -225,7 +236,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           Navigator.of(context).pushReplacementNamed(AppRoutes.register),
                       child: RichText(
                         text: TextSpan(
-                          text: "Don't have an account? ",
+                          text: localization.translate('dont_have_account_prompt'),
                           style: Theme.of(context).textTheme.bodyMedium,
                           children: [
                             TextSpan(
@@ -249,7 +260,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                           child: Text(
-                            'or',
+                            localization.translate('or'),
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
                         ),
@@ -259,7 +270,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 20),
                     _SocialButton(
                       icon: Icons.g_mobiledata_rounded,
-                      label: 'Google',
+                      label: localization.translate('google'),
                       onPressed: authController.isLoading
                           ? null
                           : () async {
@@ -274,7 +285,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 10),
                     _SocialButton(
                       icon: Icons.facebook_rounded,
-                      label: 'Facebook',
+                      label: localization.translate('facebook'),
                       onPressed: authController.isLoading
                           ? null
                           : () async {

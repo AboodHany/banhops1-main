@@ -23,6 +23,13 @@ class AiAgentService {
 
   final AppConfig _config;
 
+  bool get isGeminiDirect {
+    return _config.aiAgentBaseUrl.contains('generativelanguage.googleapis.com') ||
+           (_config.aiAgentApiKey.isNotEmpty && 
+            !_config.aiAgentBaseUrl.contains('railway') && 
+            !_config.aiAgentBaseUrl.contains('api/chat'));
+  }
+
   Future<AiAgentResult> generateAdvice({
     required String userRequest,
     required List<TransitRouteOption> alternatives,
@@ -33,11 +40,7 @@ class AiAgentService {
     final username = await UserSession.getUsername();
 
     // Determine if we should call Gemini API directly.
-    final hasApiKey = _config.aiAgentApiKey.isNotEmpty;
-    final isGeminiDirect = _config.aiAgentBaseUrl.contains('generativelanguage.googleapis.com') ||
-                           (_config.aiAgentApiKey.isNotEmpty && 
-                            !_config.aiAgentBaseUrl.contains('railway') && 
-                            !_config.aiAgentBaseUrl.contains('api/chat'));
+    final isGeminiDirect = this.isGeminiDirect;
 
     final payload = <String, dynamic>{
       'message': userRequest,
@@ -91,11 +94,22 @@ class AiAgentService {
           headers['Authorization'] = 'Bearer ${_config.aiAgentApiKey}';
         }
 
+        final instruction = 'IMPORTANT INSTRUCTION: ONLY answer if the user message is about transportation, routes, stations, microbuses, trains, costs, or transit in Benha/Qalyubia. If it is NOT related (e.g. sports like "Egypt or Senegal", politics, programming, cooking, general knowledge, etc.), you MUST decline to answer. Directly say: "عذراً، أنا مساعد ذكي مخصص للإجابة على استفسارات مواصلات وطرق بنها والقليوبية فقط. كيف يمكنني مساعدتك في رحلتك اليوم؟" and do not say anything else.';
+        
+        // Inject all route options into context so the backend LLM can see them
+        String contextInfo = '';
+        if (alternatives.isNotEmpty) {
+          final routesText = alternatives.map((r) => '${r.title} (${getTransitModeLabel(r.mode)}, cost: ${r.estimatedCost} EGP, duration: ${r.durationMinutes} minutes)').join(', ');
+          contextInfo = ' [Available route alternatives: $routesText]';
+        }
+        
+        final fromParam = origin != null ? '$origin$contextInfo ($instruction)' : '$instruction$contextInfo';
+
         final bestAlternative = alternatives.isNotEmpty ? alternatives.first : null;
         requestBody = {
           "username": username,
           "message": userRequest,
-          if (origin != null) "from": origin,
+          "from": fromParam,
           if (destination != null) "to": destination,
           if (bestAlternative != null) "transportMode": getTransitModeLabel(bestAlternative.mode),
           if (bestAlternative != null) "costMin": bestAlternative.estimatedCost.toString(),
@@ -205,6 +219,7 @@ class AiAgentService {
     Map<String, dynamic> userPreferences,
   ) {
     final buffer = StringBuffer()
+      ..writeln('تنبيه صارم جداً للنموذج: يجب عليك فحص سؤال المستخدم. إذا كان سؤال المستخدم ليس له علاقة بمواصلات وطرق وأسعار بنها والقليوبية (مثل مقارنة الفرق الرياضية، البرمجة، الأسئلة العامة)، يجب عليك فوراً رفض الإجابة والاعتذار بلطف بصيغة محددة كالتالي دون إعطاء أي معلومات أو آراء عن السؤال الخارجي: "عذراً، أنا مساعد ذكي مخصص للإجابة على استفسارات مواصلات وطرق بنها والقليوبية فقط. كيف يمكنني مساعدتك في رحلتك اليوم؟".')
       ..writeln('سؤال المستخدم الحالي: $userRequest')
       ..writeln('مكان البداية (Origin): ${origin ?? 'غير محدد'}')
       ..writeln('المقصد النهائي في بنها (Destination): ${destination ?? 'غير محدد'}')

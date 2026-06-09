@@ -94,6 +94,17 @@ class ProfileScreen extends StatelessWidget {
                       onChanged: (_) {},
                       title: Text(localization.translate('guest_mode')),
                     ),
+                    ListTile(
+                      leading: const Icon(Icons.people_alt_rounded),
+                      title: Text(localization.translate('credits')),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const CreditsScreen()),
+                        );
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -141,6 +152,154 @@ class ProfileScreen extends StatelessWidget {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+class CreditsScreen extends StatelessWidget {
+  const CreditsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final localization = AppLocalizations.of(context);
+    final names = [
+      'Abdelrahman Hany Hanafy Mohamed',
+      'Abdallah Ashraf Hassanein Hussein',
+      'Ali Mohamed Fakhry Mohamed',
+      'Mahmoud Mohamed Morsy Afifi',
+      'Mohamed Hany Mohamed El-Sayed',
+      'Mostafa Ibrahim Sayed Talba',
+      'Rofaida Khaled Ibrahim Mohamed',
+      'Hager Ehab Ibrahim Mohamed',
+      'Reem Ashraf El-Sayed Mohamed',
+    ];
+
+    final arabicNames = [
+      'عبد الرحمن هاني حنفي محمد',
+      'عبد الله أشرف حسنين حسين',
+      'علي محمد فخري محمد',
+      'محمود محمد مرسي عفيفي',
+      'محمد هاني محمد السيد',
+      'مصطفى إبراهيم سيد طلبة',
+      'رفيدة خالد إبراهيم محمد',
+      'هاجر إيهاب إبراهيم محمد',
+      'ريم أشرف السيد محمد',
+    ];
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF4F7FB),
+      appBar: AppBar(
+        title: Text(localization.translate('project_credits')),
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Icon(
+                Icons.people_alt_rounded,
+                color: Color(0xFF0F4C81),
+                size: 64,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                localization.translate('project_development_team'),
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0F4C81),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                localization.translate('faculty_and_university'),
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: names.length,
+                  itemBuilder: (context, index) {
+                    return Card(
+                      elevation: 0,
+                      margin: const EdgeInsets.symmetric(vertical: 6),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        side: BorderSide(
+                          color: Colors.grey.shade300,
+                          width: 0.5,
+                        ),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF0F4C81).withValues(alpha: 0.08),
+                                shape: BoxShape.circle,
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                '${index + 1}',
+                                style: const TextStyle(
+                                  color: Color(0xFF0F4C81),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    names[index],
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    arabicNames[index],
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                localization.translate('under_supervision'),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF0F4C81),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -84,12 +84,15 @@ class ChatController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Persist user message
-      await ChatPersistenceService.saveMessage(
-        username: _username,
-        message: prompt.trim(),
-        isUser: true,
-      );
+      // Only persist user message on client side if we are calling Gemini API directly.
+      // If we use the Railway backend, it handles database persistence internally.
+      if (_aiAgentService.isGeminiDirect) {
+        await ChatPersistenceService.saveMessage(
+          username: _username,
+          message: prompt.trim(),
+          isUser: true,
+        );
+      }
 
       final result = await _aiAgentService.generateAdvice(
         userRequest: prompt,
@@ -107,12 +110,14 @@ class ChatController extends ChangeNotifier {
       );
       _messages = [..._messages, assistantMsg];
       
-      // Persist assistant message
-      await ChatPersistenceService.saveMessage(
-        username: _username,
-        message: result.reply,
-        isUser: false,
-      );
+      // Only persist assistant message on client side if we are calling Gemini API directly.
+      if (_aiAgentService.isGeminiDirect) {
+        await ChatPersistenceService.saveMessage(
+          username: _username,
+          message: result.reply,
+          isUser: false,
+        );
+      }
     } catch (e) {
       print('Error in ChatController.ask: $e');
       final errorMsg = ChatMessage(

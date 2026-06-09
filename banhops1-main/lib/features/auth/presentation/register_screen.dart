@@ -78,8 +78,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _submit() async {
     if (!_isPhoneValid || !_isEmailValid || !_hasMinLength || !_hasDigit || !_hasUppercase || !_hasSpecialChar) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please meet all input requirements first"),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).translate('meet_requirements_first')),
           backgroundColor: Colors.orangeAccent,
         ),
       );
@@ -101,8 +101,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (mounted) {
       if (auth.profile != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Account created successfully"),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).translate('account_created_success')),
             backgroundColor: Colors.green,
           ),
         );
@@ -190,7 +190,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Create your BanHops account',
+                      localization.translate('create_account_subtitle'),
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: Colors.grey[600],
                           ),
@@ -212,7 +212,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                   ),
-                                  validator: (v) => _required(v, 'First name is required'),
+                                  validator: (v) => _required(v, localization.translate('first_name_required')),
                                 ),
                               ),
                               const SizedBox(width: 16),
@@ -226,7 +226,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                   ),
-                                  validator: (v) => _required(v, 'Last name is required'),
+                                  validator: (v) => _required(v, localization.translate('last_name_required')),
                                 ),
                               ),
                             ],
@@ -235,13 +235,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           TextFormField(
                             controller: _username,
                             decoration: InputDecoration(
-                              labelText: 'Username',
+                              labelText: localization.translate('username'),
                               prefixIcon: const Icon(Icons.person_outline_rounded),
                               border: OutlineInputBorder(
                                               borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            validator: (v) => _required(v, 'Username is required'),
+                            validator: (v) => _required(v, localization.translate('username_required')),
                           ),
                           const SizedBox(height: 16),
                           TextFormField(
@@ -256,8 +256,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             keyboardType: TextInputType.emailAddress,
                             onChanged: _checkEmail,
                             validator: (v) {
-                              if (v == null || v.trim().isEmpty) return 'Email is required';
-                              if (!_isEmailValid) return 'Enter a valid email';
+                              if (v == null || v.trim().isEmpty) return localization.translate('email_required');
+                              if (!_isEmailValid) return localization.translate('email_invalid');
                               return null;
                             },
                           ),
@@ -265,12 +265,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             padding: EdgeInsets.only(top: 8, left: 4, right: 4),
                             child: Divider(color: Colors.transparent, height: 1),
                           ),
-                          _buildRequirementItem("Email format is valid", _isEmailValid),
+                          _buildRequirementItem(localization.translate('email_format_valid'), _isEmailValid),
                           const SizedBox(height: 16),
                           TextFormField(
                             controller: _phone,
                             decoration: InputDecoration(
-                              labelText: 'Phone Number',
+                              labelText: localization.translate('phone_number'),
                               prefixIcon: const Icon(Icons.phone_outlined),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -283,8 +283,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               LengthLimitingTextInputFormatter(11),
                             ],
                             validator: (v) {
-                              if (v == null || v.trim().isEmpty) return 'Phone number is required';
-                              if (!_isPhoneValid) return "Invalid phone number";
+                              if (v == null || v.trim().isEmpty) return localization.translate('phone_required');
+                              if (!_isPhoneValid) return localization.translate('phone_invalid');
                               return null;
                             },
                           ),
@@ -292,7 +292,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             padding: EdgeInsets.only(top: 8, left: 4, right: 4),
                             child: Divider(color: Colors.transparent, height: 1),
                           ),
-                          _buildRequirementItem("Valid Egyptian phone number (01...)", _isPhoneValid),
+                          _buildRequirementItem(localization.translate('phone_format_valid'), _isPhoneValid),
                           const SizedBox(height: 16),
                           TextFormField(
                             controller: _password,
@@ -312,9 +312,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             obscureText: _obscurePass,
                             onChanged: _checkPassword,
                             validator: (v) {
-                              if (v == null || v.isEmpty) return 'Password is required';
+                              if (v == null || v.isEmpty) return localization.translate('password_required');
                               if (!_hasMinLength || !_hasDigit || !_hasUppercase || !_hasSpecialChar) {
-                                return "Please satisfy all password conditions";
+                                return localization.translate('password_conditions_error');
                               }
                               return null;
                             },
@@ -326,10 +326,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _buildRequirementItem("At least 8 characters", _hasMinLength),
-                              _buildRequirementItem("At least one digit (0-9)", _hasDigit),
-                              _buildRequirementItem("At least one uppercase letter (A-Z)", _hasUppercase),
-                              _buildRequirementItem("At least one special character (!@#\$%)", _hasSpecialChar),
+                              _buildRequirementItem(localization.translate('at_least_8_chars'), _hasMinLength),
+                              _buildRequirementItem(localization.translate('at_least_one_digit'), _hasDigit),
+                              _buildRequirementItem(localization.translate('at_least_one_uppercase'), _hasUppercase),
+                              _buildRequirementItem(localization.translate('at_least_one_special'), _hasSpecialChar),
                             ],
                           ),
                           const SizedBox(height: 16),
@@ -350,8 +350,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                             obscureText: _obscureConfirm,
                             validator: (v) {
-                              if (v == null || v.trim().isEmpty) return 'Confirm password is required';
-                              if (v != _password.text) return 'Passwords do not match';
+                              if (v == null || v.trim().isEmpty) return localization.translate('confirm_password_required');
+                              if (v != _password.text) return localization.translate('passwords_dont_match');
                               return null;
                             },
                           ),
@@ -362,7 +362,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     CheckboxListTile(
                       value: _agreedToTerms,
                       onChanged: (value) => setState(() => _agreedToTerms = value ?? false),
-                      title: const Text('I agree to Terms & Conditions'),
+                      title: Text(localization.translate('agree_to_terms')),
                       controlAffinity: ListTileControlAffinity.leading,
                       contentPadding: EdgeInsets.zero,
                     ),
@@ -404,7 +404,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       onPressed: () => Navigator.of(context).pushReplacementNamed(AppRoutes.login),
                       child: RichText(
                         text: TextSpan(
-                          text: 'Already have an account? ',
+                          text: localization.translate('already_have_account_prompt'),
                           style: Theme.of(context).textTheme.bodyMedium,
                           children: [
                             TextSpan(

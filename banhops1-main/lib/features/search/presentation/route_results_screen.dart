@@ -347,9 +347,12 @@ class _RouteCard extends StatelessWidget {
               const SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,
-                height: 40,
+                height: 48,
                 child: ElevatedButton(
                   onPressed: onTap,
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                  ),
                   child: Text(localization.translate('view_details')),
                 ),
               ),

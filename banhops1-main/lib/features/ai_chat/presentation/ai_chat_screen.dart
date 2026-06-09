@@ -50,8 +50,8 @@ class _AIChatScreenState extends State<AIChatScreen> {
       context: context,
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Clear Chat History'),
-        content: const Text('Are you sure you want to clear the screen?'),
+        title: Text(localization.translate('clear_chat_history')),
+        content: Text(localization.translate('clear_chat_confirm')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -59,7 +59,7 @@ class _AIChatScreenState extends State<AIChatScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Clear', style: TextStyle(color: Colors.red)),
+            child: Text(localization.translate('clear'), style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -86,11 +86,19 @@ class _AIChatScreenState extends State<AIChatScreen> {
       appBar: AppBar(
         title: Text(localization.translate('ai_assistant')),
         actions: [
-          if (chat.messages.length > 1)
-            IconButton(
-              icon: const Icon(Icons.delete_outline_rounded),
-              onPressed: () => _confirmClearChat(chat, localization),
+          TextButton.icon(
+            icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
+            label: Text(
+              localization.translate('clear_chat_button'),
+              style: const TextStyle(
+                color: Colors.redAccent,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
             ),
+            onPressed: () => _confirmClearChat(chat, localization),
+          ),
+          const SizedBox(width: 8),
         ],
       ),
       body: Column(
@@ -106,6 +114,9 @@ class _AIChatScreenState extends State<AIChatScreen> {
                 }
                 final message = chat.messages[index];
                 final isUser = message.role == 'user';
+                final parsedRoute = !isUser ? _parseRouteFromText(message.content) : null;
+                final displayText = isUser ? message.content : _cleanMessageText(message.content);
+
                 return Align(
                   alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
                   child: Container(
@@ -132,12 +143,14 @@ class _AIChatScreenState extends State<AIChatScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          message.content,
-                          style: TextStyle(
-                            color: isUser ? Colors.white : const Color(0xFF1A1F2B),
+                        if (displayText.isNotEmpty)
+                          Text(
+                            displayText,
+                            style: TextStyle(
+                              color: isUser ? Colors.white : const Color(0xFF1A1F2B),
+                            ),
                           ),
-                        ),
+                        if (parsedRoute != null) _ChatRouteCard(route: parsedRoute),
                       ],
                     ),
                   ),
@@ -173,8 +186,8 @@ class _AIChatScreenState extends State<AIChatScreen> {
                   Expanded(
                     child: TextField(
                       controller: _controller,
-                      decoration: const InputDecoration(
-                        hintText: 'Ask anything about your trip',
+                      decoration: InputDecoration(
+                        hintText: localization.translate('ask_anything_hint'),
                       ),
                       onSubmitted: isTyping ? null : (_) => _sendPrompt(context, _controller.text, plan),
                     ),
@@ -290,6 +303,155 @@ class _TypingBubbleState extends State<_TypingBubble> with SingleTickerProviderS
             );
           }),
         ),
+      ),
+    );
+  }
+}
+
+class ParsedRoute {
+  final String transport;
+  final String costMin;
+  final String costMax;
+  final String timeMin;
+  final String timeMax;
+
+  ParsedRoute({
+    required this.transport,
+    required this.costMin,
+    required this.costMax,
+    required this.timeMin,
+    required this.timeMax,
+  });
+}
+
+ParsedRoute? _parseRouteFromText(String text) {
+  final regex = RegExp(r'<ROUTE>([\s\S]*?)<ROUTE/>');
+  final match = regex.firstMatch(text);
+  if (match == null) return null;
+
+  final block = match.group(1) ?? '';
+  String transport = 'MICROBUS';
+  String costMin = '0';
+  String costMax = '0';
+  String timeMin = '0';
+  String timeMax = '0';
+
+  final lines = block.split('\n');
+  for (final line in lines) {
+    final parts = line.split(':');
+    if (parts.length < 2) continue;
+    final key = parts[0].trim().toLowerCase();
+    final value = parts[1].trim();
+
+    if (key == 'transport') {
+      transport = value;
+    } else if (key == 'cost_min') {
+      costMin = value;
+    } else if (key == 'cost_max') {
+      costMax = value;
+    } else if (key == 'time_min') {
+      timeMin = value;
+    } else if (key == 'time_max') {
+      timeMax = value;
+    }
+  }
+
+  return ParsedRoute(
+    transport: transport,
+    costMin: costMin,
+    costMax: costMax,
+    timeMin: timeMin,
+    timeMax: timeMax,
+  );
+}
+
+String _cleanMessageText(String text) {
+  final regex = RegExp(r'<ROUTE>([\s\S]*?)<ROUTE/>');
+  return text.replaceAll(regex, '').trim();
+}
+
+class _ChatRouteCard extends StatelessWidget {
+  final ParsedRoute route;
+  const _ChatRouteCard({required this.route});
+
+  @override
+  Widget build(BuildContext context) {
+    final localization = AppLocalizations.of(context);
+    IconData icon = Icons.directions_bus_rounded;
+    Color color = const Color(0xFF0F4C81);
+    String modeLabel = localization.translate(route.transport.toLowerCase());
+
+    if (route.transport.toUpperCase() == 'TRAIN') {
+      icon = Icons.train_rounded;
+      color = const Color(0xFF1B998B);
+    } else if (route.transport.toUpperCase() == 'MICROBUS') {
+      icon = Icons.directions_bus_filled_rounded;
+      color = const Color(0xFFE28743);
+    } else if (route.transport.toUpperCase() == 'PUBLIC_BUS') {
+      icon = Icons.directions_bus_rounded;
+      color = const Color(0xFF0F4C81);
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200, width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 6,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color, size: 24),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  modeLabel,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    color: Color(0xFF1F2937),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    const Icon(Icons.access_time_rounded, size: 14, color: Colors.grey),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${route.timeMin}-${route.timeMax} ${localization.translate('min')}',
+                      style: const TextStyle(fontSize: 13, color: Colors.grey),
+                    ),
+                    const SizedBox(width: 12),
+                    const Icon(Icons.payments_outlined, size: 14, color: Colors.grey),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${route.costMin}-${route.costMax} ${localization.translate('egp')}',
+                      style: const TextStyle(fontSize: 13, color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

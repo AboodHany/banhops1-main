@@ -705,6 +705,25 @@ class TripManager {
           score: 0,
           isRecommended: false,
         ));
+      } else {
+        // We are already at El-Marg or El-Marg El-Jedida terminal. Take a direct microbus.
+        options.add(TransitRouteOption(
+          id: 'metro-terminal-direct-microbus-${id}',
+          title: localeCode == 'ar'
+              ? 'ميكروباص مباشر'
+              : 'Direct Microbus',
+          mode: TransitMode.microbus,
+          durationMinutes: 50,
+          estimatedCost: 28.0,
+          transfers: 0,
+          rating: 4.3,
+          details: localeCode == 'ar'
+              ? 'استقل ميكروباص مباشر من موقف المرج إلى موقف بنها (الأجرة الرسمية: 28 جنيه).'
+              : 'Take a direct microbus from El-Marg terminal to Benha Terminal (Official Fare: 28 EGP).',
+          gmapsUrl: _googleMapsUrl(origin, destination),
+          score: 0,
+          isRecommended: false,
+        ));
       }
     }
 
@@ -728,6 +747,25 @@ class TripManager {
           details: localeCode == 'ar'
               ? 'استقل الخط الثاني للمترو من ${_translate(targetName, 'ar')} إلى محطة مترو مؤسسة (عدد المحطات: $stationsA، الأجرة الرسمية: ${metroFareA.toStringAsFixed(0)} جنيه)، ثم استقل ميكروباص إلى موقف بنها (الأجرة الرسمية: 22 جنيه).'
               : 'Take Metro Line 2 from $targetName to Shubra El-Kheima (Al-Moassasa) ($stationsA stations, Official Fare: ${metroFareA.toStringAsFixed(0)} EGP), then take a microbus to Benha Terminal (Official Fare: 22 EGP).',
+          gmapsUrl: _googleMapsUrl(origin, destination),
+          score: 0,
+          isRecommended: false,
+        ));
+      } else {
+        // We are already at Shubra El-Kheima terminal. Take a direct microbus.
+        options.add(TransitRouteOption(
+          id: 'metro-terminal-direct-microbus-${id}',
+          title: localeCode == 'ar'
+              ? 'ميكروباص مباشر'
+              : 'Direct Microbus',
+          mode: TransitMode.microbus,
+          durationMinutes: 40,
+          estimatedCost: 22.0,
+          transfers: 0,
+          rating: 4.3,
+          details: localeCode == 'ar'
+              ? 'استقل ميكروباص مباشر من موقف المؤسسة/شبرا الخيمة إلى موقف بنها (الأجرة الرسمية: 22 جنيه).'
+              : 'Take a direct microbus from Shubra El-Kheima (Al-Moassasa) terminal to Benha Terminal (Official Fare: 22 EGP).',
           gmapsUrl: _googleMapsUrl(origin, destination),
           score: 0,
           isRecommended: false,

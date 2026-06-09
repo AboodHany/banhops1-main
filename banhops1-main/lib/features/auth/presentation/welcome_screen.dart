@@ -34,15 +34,26 @@ class WelcomeScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF0F4C81).withValues(alpha: 0.08),
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(24),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 10,
+                          ),
+                        ],
                       ),
-                      child: const Icon(
-                        Icons.translate_rounded,
-                        size: 72,
-                        color: Color(0xFF0F4C81),
+                      child: Image.asset(
+                        'assets/images/logo.png',
+                        height: 100,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) => const Icon(
+                          Icons.translate_rounded,
+                          size: 72,
+                          color: Color(0xFF0F4C81),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 28),

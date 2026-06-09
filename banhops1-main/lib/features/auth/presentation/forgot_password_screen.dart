@@ -33,16 +33,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       case _Step.credentials:
         return localization.translate('forgot_password');
       case _Step.showPassword:
-        return 'Password Recovery';
+        return localization.translate('password_recovery');
     }
   }
 
   String _description(AppLocalizations localization) {
     switch (_step) {
       case _Step.credentials:
-        return 'Enter your registered username and email address';
+        return localization.translate('enter_credentials_desc');
       case _Step.showPassword:
-        return 'Your recovered password is:';
+        return localization.translate('recovered_password_desc');
     }
   }
 
@@ -60,9 +60,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   String? _validateEmail(String? v) {
-    if (v == null || v.trim().isEmpty) return 'Email is required';
+    if (v == null || v.trim().isEmpty) return AppLocalizations.of(context).translate('email_required');
     final r = RegExp(r'^[\w.\-]+@[\w\-]+\.[\w.\-]+$');
-    if (!r.hasMatch(v.trim())) return 'Invalid email address';
+    if (!r.hasMatch(v.trim())) return AppLocalizations.of(context).translate('email_invalid');
     return null;
   }
 
@@ -187,13 +187,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           TextFormField(
             controller: _username,
             decoration: InputDecoration(
-              labelText: 'Username',
+              labelText: localization.translate('username'),
               prefixIcon: const Icon(Icons.person_outline_rounded),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            validator: (v) => _required(v, 'Username is required'),
+            validator: (v) => _required(v, localization.translate('username_required')),
           ),
           const SizedBox(height: 16),
           TextFormField(
@@ -219,7 +219,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       height: 20,
                       child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                     )
-                  : const Text('SUBMIT'),
+                  : Text(localization.translate('submit')),
             ),
           ),
         ],
@@ -228,6 +228,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   Widget _buildShowPassword() {
+    final localization = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -243,9 +244,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               const Icon(Icons.lock_open_rounded,
                   color: Color(0xFF16A34A), size: 48),
               const SizedBox(height: 16),
-              const Text(
-                'YOUR PASSWORD',
-                style: TextStyle(
+              Text(
+                localization.translate('your_password'),
+                style: const TextStyle(
                   fontSize: 14,
                   color: Color(0xFF15803D),
                   fontWeight: FontWeight.w600,
@@ -271,7 +272,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             onPressed: () {
               Navigator.of(context).pushReplacementNamed(AppRoutes.login);
             },
-            child: const Text('LOG IN'),
+            child: Text(localization.translate('log_in')),
           ),
         ),
       ],

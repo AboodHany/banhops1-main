@@ -37,12 +37,27 @@ class _SplashScreenState extends State<SplashScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.14),
+                  color: Colors.white,
                   shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 10,
+                    ),
+                  ],
                 ),
-                child: const Icon(Icons.directions_bus_filled_rounded, size: 54, color: Colors.white),
+                child: Image.asset(
+                  'assets/images/logo.png',
+                  width: 80,
+                  height: 80,
+                  errorBuilder: (_, __, ___) => const Icon(
+                    Icons.directions_bus_filled_rounded,
+                    size: 54,
+                    color: Color(0xFF0F4C81),
+                  ),
+                ),
               ),
               const SizedBox(height: 18),
               const Text(
