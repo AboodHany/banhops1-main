@@ -112,7 +112,6 @@ class DemoTransitCatalog {
   ];
 
   static const List<LocationNode> qalyubiaCities = [
-    LocationNode(id: 301, name: 'Benha (Train)', latitude: 30.4607, longitude: 31.1865, type: TransitLocationType.station, alias: 'Capital of Qalyubia', governorate: 'Qalyubia'),
     LocationNode(id: 302, name: 'Qaha', latitude: 30.2831, longitude: 31.2045, type: TransitLocationType.hub, alias: 'Qaha City', governorate: 'Qalyubia'),
     LocationNode(id: 303, name: 'Toukh', latitude: 30.3546, longitude: 31.2005, type: TransitLocationType.hub, alias: 'Toukh Hub', governorate: 'Qalyubia'),
     LocationNode(id: 304, name: 'Shibin Al Qanater', latitude: 30.3134, longitude: 31.3145, type: TransitLocationType.hub, alias: 'Shibin Station', governorate: 'Qalyubia'),

@@ -540,10 +540,103 @@ class AppLocalizations {
     'El-Bohouth Metro': 'البحوث (المترو)',
     'League of Arab States Metro': 'جامعة الدول (المترو)',
     'Boulaq El-Dakrour Metro': 'بولاق الدكرور (المترو)',
+
+    // Metro stations and others (Base Names)
+    'Ain Helwan': 'عين حلوان',
+    'Wadi Hof': 'وادي حوف',
+    'Hadayek Helwan': 'حدائق حلوان',
+    'El-Maasara': 'المعصرة',
+    'Tora El-Asmant': 'طرة الأسمنت',
+    'Kozzika': 'كوتسيكا',
+    'Tora El-Balad': 'طرة البلد',
+    'Sakanat El-Maadi': 'ثكنات المعادي',
+    'Hadayek El-Maadi': 'حدائق المعادي',
+    'Dar El-Salam': 'دار السلام',
+    'El-Zahraa': 'الزهراء',
+    'Mar Girgis': 'مار جرجس',
+    'El-Malek El-Saleh': 'الملك الصالح',
+    'Saad Zaghloul': 'سعد زغلول',
+    'Sadat': 'السادات',
+    'Nasser': 'ناصر',
+    'Orabi': 'عرابي',
+    'Al-Shohadaa': 'الشهداء',
+    'Ghamra': 'غمرة',
+    'El-Demerdash': 'الدمرداش',
+    'Manshiet El-Sadr': 'منشية الصدر',
+    'Kobri El-Qobba': 'كوبري القبة',
+    'Hammamat El-Qobba': 'حمامات القبة',
+    'Saray El-Qobba': 'سراي القبة',
+    'Hadayek El-Zaitoun': 'حدائق الزيتون',
+    'Helmiet El-Zaitoun': 'حلمية الزيتون',
+    'El-Matareya': 'المطرية',
+    'Ain Shams': 'عين شمس',
+    'Ezbet El-Nakhl': 'عزبة النخل',
+    'Mohamed Naguib': 'محمد نجيب',
+    'Attaba': 'العتبة',
+    'Massarra': 'مسرة',
+    'Rod El-Farag': 'روض الفرج',
+    'St. Teresa': 'سانت تريزا',
+    'El-Khalafawy': 'الخلفاوي',
+    'El-Mazallat': 'المظلات',
+    'El-Estad': 'الإستاد',
+    'AUC': 'الجامعة الأمريكية',
+    'Wadi El-Nile': 'وادي النيل',
+    'El-Hosary': 'الحصري',
+    'Bashtiel Train Station': 'محطة قطارات بشتيل',
+    'El-Bohouth': 'البحوث',
+    'Opera': 'الأوبرا',
+    'League of Arab States': 'جامعة الدول العربية',
+    'Boulaq El-Dakrour': 'بولاق الدكرور',
+    'Shiblanga': 'شبلنجة',
+    'Birket El-Sab': 'بركة السبع',
+    'Samanoud': 'سمنود',
+    'Sherbin': 'شربين',
+    'Minya El-Qamh': 'منية القمح',
+    'Abu Hammad': 'أبو حماد',
+    'Itay El-Baroud': 'إيتاي البارود',
+    'Kafr El-Dawar': 'كفر الدوار',
+    'Abu Hummus': 'أبو حمص',
+    'El-Tell El-Kebir': 'التل الكبير',
+    'El-Kassasin': 'القصاصين',
+    'Qantara West': 'القنطرة غرب',
+    'Shubra El-Kheima': 'شبرا الخيمة',
+
+    // Missing Giza Metro Stations
+    'Sakiat Mekky': 'ساقية مكي',
+    'Omm El-Misryeen': 'أم المصريين',
+    'Faisal': 'فيصل',
+
+    // Specific Stations to avoid fallback issues
+    'Faculty of Agriculture (Metro)': 'كلية الزراعة (مترو)',
+    'Benha Train Station (Train)': 'محطة قطار بنها',
+    '10th of October': 'العاشر من رمضان',
+    '10th of October (LRT)': 'العاشر من رمضان (LRT)',
   };
 
   String translateLocation(String name) {
     if (locale.languageCode == 'ar') {
+      // 1. Try exact match first
+      if (_locationTranslations.containsKey(name)) {
+        return _locationTranslations[name]!;
+      }
+
+      // 2. Try regex match for parenthesis suffixes (e.g. "Shiblanga (Train)")
+      final match = RegExp(r'^(.+?)\s*\((Train|Metro|LRT|Monorail)\)$').firstMatch(name);
+      if (match != null) {
+        final baseName = match.group(1)!.trim();
+        final suffix = match.group(2)!;
+
+        final translatedBase = _locationTranslations[baseName] ?? baseName;
+        final translatedSuffix = switch (suffix) {
+          'Train' => 'قطار',
+          'Metro' => 'مترو',
+          'LRT' => 'LRT',
+          'Monorail' => 'المونوريل',
+          _ => suffix,
+        };
+        return '$translatedBase ($translatedSuffix)';
+      }
+
       return _locationTranslations[name] ?? name;
     }
     return name;
