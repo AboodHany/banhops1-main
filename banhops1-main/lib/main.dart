@@ -7,6 +7,8 @@ import 'core/services/supabase_service.dart';
 import 'core/services/chat_persistence_service.dart';
 import 'core/services/forgot_password_service.dart';
 import 'core/state/app_state.dart';
+import 'package:banhops1/features/ai_chat/state/chat_provider.dart';
+import 'package:banhops1/features/ai_chat/apis/api_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,6 +16,11 @@ void main() async {
   final config = AppConfig.fromEnvironment();
   ChatPersistenceService.baseUrl = config.backendBaseUrl;
   ForgotPasswordService.baseUrl = config.backendBaseUrl;
+
+  // Configure Gemini API Key and initialize local Hive DB
+  ApiService.init(config.aiAgentApiKey);
+  await ChatProvider.initHive();
+
   await SupabaseService.initialize(config);
   final appState = AppState();
   await appState.loadLocale();

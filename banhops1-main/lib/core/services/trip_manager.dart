@@ -1221,14 +1221,17 @@ class TripManager {
     final railAlts = _getRailAlternatives(origin, destination, localeCode, trains);
     routes.addAll(railAlts);
 
-    final Set<String> seen = {};
-    final List<TransitRouteOption> uniqueRoutes = [];
+    // Deduplicate: keep at most 2 cheapest routes per transport mode
+    final Map<TransitMode, List<TransitRouteOption>> byMode = {};
     for (final route in routes) {
-      final key = '${route.mode.toString()}-${route.title}-${route.estimatedCost.toStringAsFixed(2)}';
-      if (!seen.contains(key)) {
-        seen.add(key);
-        uniqueRoutes.add(route);
-      }
+      byMode.putIfAbsent(route.mode, () => []);
+      byMode[route.mode]!.add(route);
+    }
+    final List<TransitRouteOption> uniqueRoutes = [];
+    for (final mode in byMode.keys) {
+      final modeRoutes = byMode[mode]!;
+      modeRoutes.sort((a, b) => a.estimatedCost.compareTo(b.estimatedCost));
+      uniqueRoutes.addAll(modeRoutes.take(2));
     }
     return uniqueRoutes;
   }

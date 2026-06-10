@@ -9,9 +9,9 @@ import '../services/chat_persistence_service.dart';
 import '../services/user_session.dart';
 
 const String kTransitScopeApologyAr =
-    'عذراً، أنا مساعد ذكي مخصص للإجابة على استفسارات المواصلات والرحلات فقط. كيف يمكنني مساعدتك في رحلتك اليوم؟';
+    'عذراً، مقدرش أساعدك في ده. ممكن أساعدك في حاجة تانية؟';
 const String kTransitScopeApologyEn =
-    'Sorry, I can only help with transit, routes, fares, and trips. How can I help with your trip today?';
+    'Sorry, I can\'t help with that. Can I help you with something else?';
 
 class ChatController extends ChangeNotifier {
   ChatController({required AppConfig config})
@@ -100,7 +100,9 @@ class ChatController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      if (!_isTransitScoped(normalizedPrompt, recentContext)) {
+      // When using Gemini Direct, let the AI model decide what's in/out of scope
+      // via its system instruction. Only apply client-side filter for non-Gemini backends.
+      if (!_aiAgentService.isGeminiDirect && !_isTransitScoped(normalizedPrompt, recentContext)) {
         await _appendAssistant(
           _scopeApology(normalizedPrompt),
           isSystem: true,

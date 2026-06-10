@@ -24,7 +24,14 @@ import '../features/search/presentation/trip_details_screen.dart';
 import '../features/splash/splash_screen.dart';
 import '../features/ai_chat/presentation/ai_chat_screen.dart';
 import '../features/train/presentation/train_screen.dart';
+import '../features/history/presentation/history_screen.dart';
+import '../features/profile/presentation/profile_screen.dart';
 import 'app_routes.dart';
+
+import 'package:banhops1/features/ai_chat/state/chat_provider.dart';
+import 'package:banhops1/features/ai_chat/state/settings_provider.dart';
+import 'package:banhops1/features/ai_chat/state/user_profile_provider.dart';
+import 'package:banhops1/features/ai_chat/state/voice_input_provider.dart';
 
 class BanHopsApp extends StatelessWidget {
   const BanHopsApp({super.key, required this.config, required this.appState});
@@ -45,6 +52,18 @@ class BanHopsApp extends StatelessWidget {
         ),
         ChangeNotifierProvider<ChatController>(
           create: (_) => ChatController(config: config),
+        ),
+        ChangeNotifierProvider<ChatProvider>(
+          create: (_) => ChatProvider(),
+        ),
+        ChangeNotifierProvider<SettingsProvider>(
+          create: (_) => SettingsProvider()..getSavedSettings(),
+        ),
+        ChangeNotifierProvider<UserProfileProvider>(
+          create: (_) => UserProfileProvider()..loadUser(),
+        ),
+        ChangeNotifierProvider<VoiceInputProvider>(
+          create: (_) => VoiceInputProvider(),
         ),
         Provider<AppConfig>.value(value: config),
       ],
@@ -207,12 +226,12 @@ class BanHopsApp extends StatelessWidget {
 
                 case AppRoutes.history:
                   return MaterialPageRoute(
-                    builder: (_) => const MainNavigationHub(),
+                    builder: (_) => const HistoryScreen(),
                   );
 
                 case AppRoutes.profile:
                   return MaterialPageRoute(
-                    builder: (_) => const MainNavigationHub(),
+                    builder: (_) => const ProfileScreen(),
                   );
 
                 case AppRoutes.routeDetails:

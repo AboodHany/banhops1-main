@@ -13,9 +13,14 @@ class TripRepository {
 
   Future<List<TripRecord>> fetchHistory({String? userId}) async {
     final client = SupabaseService.client;
+    final List<TripRecord> allRecords = [];
+
+    // Always include local history first
+    allRecords.addAll(DemoTransitCatalog.history);
 
     if (client == null) {
-      return DemoTransitCatalog.history;
+      // No Supabase — return local history only (already sorted newest first)
+      return allRecords;
     }
 
     try {
@@ -78,11 +83,26 @@ class TripRepository {
         ));
       }
 
-      return records;
+      // Merge: local history first, then Supabase records (dedup by origin+dest+time+cost)
+      allRecords.addAll(records);
     } catch (e) {
       print('Error fetching trip history: $e');
-      return DemoTransitCatalog.history;
     }
+
+    // Deduplicate by composite key
+    final Set<String> seen = {};
+    final List<TripRecord> merged = [];
+    for (final trip in allRecords) {
+      final key = '${trip.origin.id}-${trip.destination.id}-${trip.estimatedTime}-${trip.estimatedCost}';
+      if (!seen.contains(key)) {
+        seen.add(key);
+        merged.add(trip);
+      }
+    }
+
+    // Sort newest first
+    merged.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return merged;
   }
 
   Future<int> countCompletedTrips({String? userId}) async {

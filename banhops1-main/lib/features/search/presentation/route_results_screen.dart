@@ -221,6 +221,7 @@ class _RouteResultsScreenState extends State<RouteResultsScreen> {
                               route: route,
                               localization: localization,
                               onTap: () {
+                                _tripPlanner.saveTripForRoute(route);
                                 Navigator.of(context).pushNamed(
                                   AppRoutes.tripDetails,
                                   arguments: {

@@ -192,6 +192,12 @@ class AppLocalizations {
       'project_development_team': 'Project Development Team',
       'faculty_and_university': 'Faculty of Computers & Artificial Intelligence\nBenha University',
       'under_supervision': 'Under Supervision of Dr. Shaimaa Talaat',
+      'history': 'Trip History',
+      'how_can_i_help': 'How can I help?',
+      'set_api_key': 'Set API_KEY to start',
+      'banhops_ai': 'Banhops AI',
+      'back': 'Back',
+      'message_hint': 'Type your message...',
     },
     'ar': {
       'splash_title': 'بنهوبس',
@@ -370,6 +376,12 @@ class AppLocalizations {
       'project_development_team': 'فريق عمل وتطوير المشروع',
       'faculty_and_university': 'كلية الحاسبات والذكاء الاصطناعي\nجامعة بنها',
       'under_supervision': 'تحت إشراف د. شيماء طلعت',
+      'history': 'الرحلات السابقة',
+      'how_can_i_help': 'كيف يمكنني مساعدتك؟',
+      'set_api_key': 'قم بتعيين مفتاح API للبدء',
+      'banhops_ai': 'بنهوبس AI',
+      'back': 'رجوع',
+      'message_hint': 'اكتب رسالتك...',
     },
   };
 

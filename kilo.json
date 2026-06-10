@@ -1,0 +1,25 @@
+{
+  "$schema": "https://kilocode.ai/schema/v1.json",
+  "shell": "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+  "plugin": [
+    "@kilocode/plugin"
+  ],
+  "watcher": {
+    "ignore": [
+      "build/**",
+      ".dart_tool/**",
+      ".idea/**",
+      "android/.gradle/**",
+      "android/app/build/**",
+      "ios/Pods/**",
+      "linux/build/**",
+      "macos/Pods/**",
+      "windows/build/**",
+      "canvaskit/**",
+      ".kilo/node_modules/**"
+    ]
+  },
+  "instructions": [
+    ".agents/AGENTS.md"
+  ]
+}
