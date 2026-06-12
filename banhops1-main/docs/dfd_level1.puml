@@ -1,0 +1,67 @@
+@startuml
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam defaultFontName Arial
+
+title <size:20><b>DFD Level 1 — BanHops Main Processes</b></size>
+
+' ========== External Entities ==========
+actor "User" as user
+rectangle "Gemini / Groq API" as ai
+rectangle "Google Maps" as maps
+
+' ========== Data Stores ==========
+rectangle "D1: Trip History\n(Supabase + Local)" as ds1 <<datastore>>
+rectangle "D2: Transit Catalog\n(Locations, fares, trains)" as ds2 <<datastore>>
+rectangle "D3: Chat History\n(Hive)" as ds3 <<datastore>>
+rectangle "D4: User Settings\n(Hive)" as ds4 <<datastore>>
+rectangle "D5: Auth Data\n(Supabase Auth)" as ds5 <<datastore>>
+
+' ========== Processes ==========
+rectangle "1.0\nPlan Trip" as p1
+rectangle "2.0\nView Route Results" as p2
+rectangle "3.0\nView Trip Details" as p3
+rectangle "4.0\nChat with AI" as p4
+rectangle "5.0\nManage Account" as p5
+rectangle "6.0\nManage Settings" as p6
+
+' ===== User → Processes =====
+user --> p1 : Origin, destination
+user --> p2 : Select route
+user --> p3 : View details
+user --> p4 : Chat message
+user --> p5 : Login/signup request
+user --> p6 : Language/theme choice
+
+' ===== Processes → User =====
+p1 --> user : Route options
+p2 --> user : Filtered ranked list
+p3 --> user : Step-by-step guidance
+p4 --> user : AI answer
+p5 --> user : Profile, trip history
+p6 --> user : Updated UI
+
+' ===== P1 — Plan Trip =====
+p1 --> ds1 : Save trip record
+p1 --> ds2 : Read locations & fares
+
+' ===== P2 — View Route Results =====
+p2 --> ds1 : Save selected trip
+p2 --> ds2 : Read filter options
+
+' ===== P3 — Trip Details =====
+p3 --> ds1 : Save trip on view
+
+' ===== P4 — Chat with AI =====
+p4 --> ds3 : Save message history
+p4 <--> ai : Send prompt → Get reply
+
+' ===== P5 — Manage Account =====
+p5 <--> ds5 : Create/verify user
+p5 --> ds1 : Fetch completed trips
+p5 --> maps : Open directions
+
+' ===== P6 — Manage Settings =====
+p6 <--> ds4 : Read/write preferences
+
+@enduml

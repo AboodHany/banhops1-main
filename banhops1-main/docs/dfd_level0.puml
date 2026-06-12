@@ -1,0 +1,35 @@
+@startuml
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam defaultFontName Arial
+
+title <size:20><b>DFD Level 0 — BanHops Context Diagram</b></size>
+
+' External entities
+actor "User" as user
+rectangle "Supabase" as supabase
+rectangle "Gemini / Groq API" as ai
+rectangle "Google Maps" as maps
+rectangle "Hive DB" as hive
+
+' System
+rectangle "BanHops System" as system #0F4C81 {
+}
+
+' Flows: User
+user --> system : Origin/destination,\nroute selections,\nchat messages,\nsettings
+system --> user : Route results,\ntrip details,\nAI responses,\nprofile
+
+' Flows: Supabase
+system <--> supabase : Save/load trips & routes,\nlogin/signup credentials
+
+' Flows: AI
+system <--> ai : User question\n→ AI response
+
+' Flows: Maps
+system --> maps : Open directions URL
+
+' Flows: Hive
+system <--> hive : Save/load chat history,\ntheme & language prefs
+
+@enduml
