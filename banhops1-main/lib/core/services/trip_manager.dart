@@ -368,132 +368,189 @@ class TripManager {
       alias: 'New Terminal',
       governorate: 'Qalyubia',
     );
+    final trainHub = LocationNode(
+      id: 102,
+      name: 'Benha Train Station (Train)',
+      latitude: 30.4607,
+      longitude: 31.1865,
+      type: TransitLocationType.station,
+      alias: 'Rail Hub',
+      governorate: 'Qalyubia',
+    );
 
-    final isDestSubBenha = destination.id >= 103 && destination.id <= 110;
-    final isOriginSubBenha = origin.id >= 103 && origin.id <= 110;
+    final isOriginInsideBenha = origin.id >= 101 && origin.id <= 110;
+    final isDestInsideBenha = destination.id >= 101 && destination.id <= 110;
 
-    // Case 1: Destination is Colleges Complex, etc. (103 to 110)
-    if (isDestSubBenha && origin.id != 101) {
-      final baseAlternatives = _buildAlternativesBase(origin, terminalHub, microbuses, trains, localeCode);
-      return baseAlternatives.map((baseRoute) {
-        final destName = _translate(destination.name, localeCode);
-        final newTitle = localeCode == 'ar'
-            ? '${baseRoute.title} + سوزوكي داخلي'
-            : '${baseRoute.title} + Internal Suzuki';
-
-        final newDetails = localeCode == 'ar'
-            ? '${baseRoute.details}\nثم سوزوكي داخلي من موقف بنها إلى $destName (الأجرة الرسمية: 5 جنيه).'
-            : '${baseRoute.details}\nThen internal Suzuki from Benha Terminal to $destName (Official Fare: 5 EGP).';
-
-        return TransitRouteOption(
-          id: '${baseRoute.id}-suzuki',
-          title: newTitle,
-          mode: baseRoute.mode,
-          durationMinutes: baseRoute.durationMinutes + 15,
-          estimatedCost: baseRoute.estimatedCost + 5.0,
-          transfers: baseRoute.transfers >= 2 ? 2 : baseRoute.transfers + 1,
-          rating: baseRoute.rating,
-          details: newDetails,
-          gmapsUrl: _googleMapsUrl(origin, destination),
-          score: baseRoute.score,
-          isRecommended: baseRoute.isRecommended,
-        );
-      }).toList();
+    // Local trip within Benha (ID 101 to 110 for both endpoints)
+    if (isOriginInsideBenha && isDestInsideBenha) {
+      return _buildAlternativesBase(origin, destination, microbuses, trains, localeCode);
     }
 
-    // Case 2: Origin is Colleges Complex, etc. (103 to 110)
-    if (isOriginSubBenha && destination.id != 101) {
-      final baseAlternatives = _buildAlternativesBase(terminalHub, destination, microbuses, trains, localeCode);
-      return baseAlternatives.map((baseRoute) {
-        final originName = _translate(origin.name, localeCode);
-        final newTitle = localeCode == 'ar'
-            ? 'سوزوكي داخلي + ${baseRoute.title}'
-            : 'Internal Suzuki + ${baseRoute.title}';
+    // Trip starts outside Benha and ends inside Benha
+    if (!isOriginInsideBenha && isDestInsideBenha) {
+      final trainBaseRoutes = _buildAlternativesBase(origin, trainHub, microbuses, trains, localeCode)
+          .where((r) => r.mode == TransitMode.train)
+          .toList();
+      final otherBaseRoutes = _buildAlternativesBase(origin, terminalHub, microbuses, trains, localeCode)
+          .where((r) => r.mode != TransitMode.train)
+          .toList();
 
-        final newDetails = localeCode == 'ar'
-            ? 'ابدأ بركوب سوزوكي داخلي من $originName إلى موقف بنها (الأجرة الرسمية: 5 جنيه)، ثم ${baseRoute.details}'
-            : 'Start by taking internal Suzuki from $originName to Benha Terminal (Official Fare: 5 EGP), then ${baseRoute.details}';
+      final List<TransitRouteOption> finalRoutes = [];
 
-        return TransitRouteOption(
-          id: '${baseRoute.id}-suzuki',
-          title: newTitle,
-          mode: baseRoute.mode,
-          durationMinutes: baseRoute.durationMinutes + 15,
-          estimatedCost: baseRoute.estimatedCost + 5.0,
-          transfers: baseRoute.transfers >= 2 ? 2 : baseRoute.transfers + 1,
-          rating: baseRoute.rating,
-          details: newDetails,
-          gmapsUrl: _googleMapsUrl(origin, destination),
-          score: baseRoute.score,
-          isRecommended: baseRoute.isRecommended,
-        );
-      }).toList();
-    }
+      // 1. Train routes: natural hub is trainHub (102)
+      for (final baseRoute in trainBaseRoutes) {
+        if (destination.id == 102) {
+          // Going directly to train station: fixed fare, no transfer
+          finalRoutes.add(baseRoute);
+        } else {
+          // Going to anywhere else in Benha: add 5 EGP transfer
+          final destName = _translate(destination.name, localeCode);
+          final transferStation = localeCode == 'ar' ? 'محطة قطار بنها' : 'Benha Train Station';
+          
+          final newTitle = localeCode == 'ar'
+              ? '${baseRoute.title} + سوزوكي داخلي'
+              : '${baseRoute.title} + Internal Suzuki';
 
-    // Case 3: Destination is Benha Train Station (ID 102)
-    if (destination.id == 102 && origin.id != 101 && origin.id != 102) {
-      final baseAlternatives = _buildAlternativesBase(origin, destination, microbuses, trains, localeCode);
-      return baseAlternatives.map((baseRoute) {
-        if (baseRoute.mode == TransitMode.train) {
-          return baseRoute;
+          final newDetails = localeCode == 'ar'
+              ? '${baseRoute.details}\nثم سوزوكي داخلي من $transferStation إلى $destName (الأجرة الرسمية: 5 جنيه).'
+              : '${baseRoute.details}\nThen internal Suzuki from $transferStation to $destName (Official Fare: 5 EGP).';
+
+          finalRoutes.add(TransitRouteOption(
+            id: '${baseRoute.id}-suzuki',
+            title: newTitle,
+            mode: baseRoute.mode,
+            durationMinutes: baseRoute.durationMinutes + 15,
+            estimatedCost: baseRoute.estimatedCost + 5.0,
+            transfers: baseRoute.transfers >= 2 ? 2 : baseRoute.transfers + 1,
+            rating: baseRoute.rating,
+            details: newDetails,
+            gmapsUrl: _googleMapsUrl(origin, destination),
+            score: baseRoute.score,
+            isRecommended: baseRoute.isRecommended,
+          ));
         }
-        final destName = _translate(destination.name, localeCode);
-        final newTitle = localeCode == 'ar'
-            ? '${baseRoute.title} + سوزوكي داخلي'
-            : '${baseRoute.title} + Internal Suzuki';
+      }
 
-        final newDetails = localeCode == 'ar'
-            ? '${baseRoute.details}\nثم سوزوكي داخلي من موقف بنها إلى $destName (الأجرة الرسمية: 5 جنيه).'
-            : '${baseRoute.details}\nThen internal Suzuki from Benha Terminal to $destName (Official Fare: 5 EGP).';
+      // 2. Microbus/Bus/Other routes: natural hub is terminalHub (101)
+      for (final baseRoute in otherBaseRoutes) {
+        if (destination.id == 101) {
+          // Going directly to bus terminal: fixed fare, no transfer
+          finalRoutes.add(baseRoute);
+        } else {
+          // Going to anywhere else in Benha: add 5 EGP transfer
+          final destName = _translate(destination.name, localeCode);
+          final transferStation = localeCode == 'ar' ? 'موقف بنها' : 'Benha Terminal';
 
-        return TransitRouteOption(
-          id: '${baseRoute.id}-suzuki',
-          title: newTitle,
-          mode: baseRoute.mode,
-          durationMinutes: baseRoute.durationMinutes + 15,
-          estimatedCost: baseRoute.estimatedCost + 5.0,
-          transfers: baseRoute.transfers >= 2 ? 2 : baseRoute.transfers + 1,
-          rating: baseRoute.rating,
-          details: newDetails,
-          gmapsUrl: _googleMapsUrl(origin, destination),
-          score: baseRoute.score,
-          isRecommended: baseRoute.isRecommended,
-        );
-      }).toList();
-    }
+          final newTitle = localeCode == 'ar'
+              ? '${baseRoute.title} + سوزوكي داخلي'
+              : '${baseRoute.title} + Internal Suzuki';
 
-    // Case 4: Origin is Benha Train Station (ID 102)
-    if (origin.id == 102 && destination.id != 101 && destination.id != 102) {
-      final baseAlternatives = _buildAlternativesBase(origin, destination, microbuses, trains, localeCode);
-      return baseAlternatives.map((baseRoute) {
-        if (baseRoute.mode == TransitMode.train) {
-          return baseRoute;
+          final newDetails = localeCode == 'ar'
+              ? '${baseRoute.details}\nثم سوزوكي داخلي من $transferStation إلى $destName (الأجرة الرسمية: 5 جنيه).'
+              : '${baseRoute.details}\nThen internal Suzuki from $transferStation to $destName (Official Fare: 5 EGP).';
+
+          finalRoutes.add(TransitRouteOption(
+            id: '${baseRoute.id}-suzuki',
+            title: newTitle,
+            mode: baseRoute.mode,
+            durationMinutes: baseRoute.durationMinutes + 15,
+            estimatedCost: baseRoute.estimatedCost + 5.0,
+            transfers: baseRoute.transfers >= 2 ? 2 : baseRoute.transfers + 1,
+            rating: baseRoute.rating,
+            details: newDetails,
+            gmapsUrl: _googleMapsUrl(origin, destination),
+            score: baseRoute.score,
+            isRecommended: baseRoute.isRecommended,
+          ));
         }
-        final originName = _translate(origin.name, localeCode);
-        final newTitle = localeCode == 'ar'
-            ? 'سوزوكي داخلي + ${baseRoute.title}'
-            : 'Internal Suzuki + ${baseRoute.title}';
+      }
 
-        final newDetails = localeCode == 'ar'
-            ? 'ابدأ بركوب سوزوكي داخلي من $originName إلى موقف بنها (الأجرة الرسمية: 5 جنيه)، ثم ${baseRoute.details}'
-            : 'Start by taking internal Suzuki from $originName to Benha Terminal (Official Fare: 5 EGP), then ${baseRoute.details}';
-
-        return TransitRouteOption(
-          id: '${baseRoute.id}-suzuki',
-          title: newTitle,
-          mode: baseRoute.mode,
-          durationMinutes: baseRoute.durationMinutes + 15,
-          estimatedCost: baseRoute.estimatedCost + 5.0,
-          transfers: baseRoute.transfers >= 2 ? 2 : baseRoute.transfers + 1,
-          rating: baseRoute.rating,
-          details: newDetails,
-          gmapsUrl: _googleMapsUrl(origin, destination),
-          score: baseRoute.score,
-          isRecommended: baseRoute.isRecommended,
-        );
-      }).toList();
+      return finalRoutes;
     }
 
+    // Trip starts inside Benha and ends outside Benha
+    if (isOriginInsideBenha && !isDestInsideBenha) {
+      final trainBaseRoutes = _buildAlternativesBase(trainHub, destination, microbuses, trains, localeCode)
+          .where((r) => r.mode == TransitMode.train)
+          .toList();
+      final otherBaseRoutes = _buildAlternativesBase(terminalHub, destination, microbuses, trains, localeCode)
+          .where((r) => r.mode != TransitMode.train)
+          .toList();
+
+      final List<TransitRouteOption> finalRoutes = [];
+
+      // 1. Train routes: natural hub is trainHub (102)
+      for (final baseRoute in trainBaseRoutes) {
+        if (origin.id == 102) {
+          // Starting directly from train station: fixed fare, no transfer
+          finalRoutes.add(baseRoute);
+        } else {
+          // Starting from anywhere else in Benha: add 5 EGP transfer
+          final originName = _translate(origin.name, localeCode);
+          final transferStation = localeCode == 'ar' ? 'محطة قطار بنها' : 'Benha Train Station';
+
+          final newTitle = localeCode == 'ar'
+              ? 'سوزوكي داخلي + ${baseRoute.title}'
+              : 'Internal Suzuki + ${baseRoute.title}';
+
+          final newDetails = localeCode == 'ar'
+              ? 'ابدأ بركوب سوزوكي داخلي من $originName إلى $transferStation (الأجرة الرسمية: 5 جنيه)، ثم ${baseRoute.details}'
+              : 'Start by taking internal Suzuki from $originName to $transferStation (Official Fare: 5 EGP), then ${baseRoute.details}';
+
+          finalRoutes.add(TransitRouteOption(
+            id: '${baseRoute.id}-suzuki',
+            title: newTitle,
+            mode: baseRoute.mode,
+            durationMinutes: baseRoute.durationMinutes + 15,
+            estimatedCost: baseRoute.estimatedCost + 5.0,
+            transfers: baseRoute.transfers >= 2 ? 2 : baseRoute.transfers + 1,
+            rating: baseRoute.rating,
+            details: newDetails,
+            gmapsUrl: _googleMapsUrl(origin, destination),
+            score: baseRoute.score,
+            isRecommended: baseRoute.isRecommended,
+          ));
+        }
+      }
+
+      // 2. Microbus/Bus/Other routes: natural hub is terminalHub (101)
+      for (final baseRoute in otherBaseRoutes) {
+        if (origin.id == 101) {
+          // Starting directly from bus terminal: fixed fare, no transfer
+          finalRoutes.add(baseRoute);
+        } else {
+          // Starting from anywhere else in Benha: add 5 EGP transfer
+          final originName = _translate(origin.name, localeCode);
+          final transferStation = localeCode == 'ar' ? 'موقف بنها' : 'Benha Terminal';
+
+          final newTitle = localeCode == 'ar'
+              ? 'سوزوكي داخلي + ${baseRoute.title}'
+              : 'Internal Suzuki + ${baseRoute.title}';
+
+          final newDetails = localeCode == 'ar'
+              ? 'ابدأ بركوب سوزوكي داخلي من $originName إلى $transferStation (الأجرة الرسمية: 5 جنيه)، ثم ${baseRoute.details}'
+              : 'Start by taking internal Suzuki from $originName to $transferStation (Official Fare: 5 EGP), then ${baseRoute.details}';
+
+          finalRoutes.add(TransitRouteOption(
+            id: '${baseRoute.id}-suzuki',
+            title: newTitle,
+            mode: baseRoute.mode,
+            durationMinutes: baseRoute.durationMinutes + 15,
+            estimatedCost: baseRoute.estimatedCost + 5.0,
+            transfers: baseRoute.transfers >= 2 ? 2 : baseRoute.transfers + 1,
+            rating: baseRoute.rating,
+            details: newDetails,
+            gmapsUrl: _googleMapsUrl(origin, destination),
+            score: baseRoute.score,
+            isRecommended: baseRoute.isRecommended,
+          ));
+        }
+      }
+
+      return finalRoutes;
+    }
+
+    // Origin and destination are both outside Benha: standard routing
     return _buildAlternativesBase(origin, destination, microbuses, trains, localeCode);
   }
 
@@ -1194,17 +1251,27 @@ class TripManager {
         }
       } else {
         // Fallback to generic microbus if no db match
-        final title = localeCode == 'ar' ? 'ميكروباص مباشر' : 'Direct Microbus';
-        final fallbackFare = _getFallbackMicrobusFare(origin);
-        final details = localeCode == 'ar'
-            ? 'ميكروباص مباشر من مواقف السيارات المحلية. الأجرة الرسمية: ${fallbackFare.toStringAsFixed(1)} جنيه.'
-            : 'Direct microbus from local terminal hubs. Official Fare: ${fallbackFare.toStringAsFixed(1)} EGP.';
+        final isLocalBenha = origin.id >= 101 && origin.id <= 110 && destination.id >= 101 && destination.id <= 110;
+        
+        final title = isLocalBenha
+            ? (localeCode == 'ar' ? 'سوزوكي داخلي' : 'Internal Suzuki')
+            : (localeCode == 'ar' ? 'ميكروباص مباشر' : 'Direct Microbus');
+            
+        final fallbackFare = isLocalBenha ? 5.0 : _getFallbackMicrobusFare(origin);
+        
+        final details = isLocalBenha
+            ? (localeCode == 'ar'
+                ? 'سوزوكي داخلي مباشرة بين نقاط بنها. الأجرة الرسمية: 5.0 جنيه.'
+                : 'Direct internal Suzuki between Benha locations. Official Fare: 5.0 EGP.')
+            : (localeCode == 'ar'
+                ? 'ميكروباص مباشر من مواقف السيارات المحلية. الأجرة الرسمية: ${fallbackFare.toStringAsFixed(1)} جنيه.'
+                : 'Direct microbus from local terminal hubs. Official Fare: ${fallbackFare.toStringAsFixed(1)} EGP.');
 
         routes.add(TransitRouteOption(
-          id: 'microbus-${origin.id}-${destination.id}',
+          id: isLocalBenha ? 'suzuki-${origin.id}-${destination.id}' : 'microbus-${origin.id}-${destination.id}',
           title: title,
           mode: TransitMode.microbus,
-          durationMinutes: microbusDuration,
+          durationMinutes: isLocalBenha ? 15 : microbusDuration,
           estimatedCost: fallbackFare,
           transfers: 0,
           rating: 4.1,
