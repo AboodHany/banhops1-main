@@ -1,8 +1,12 @@
 class ApiService {
   static String? _apiKey;
+  static String _baseUrl = '';
+  static String _groqModel = 'llama-3.1-8b-instant';
 
-  static void init(String key) {
+  static void init(String key, {String baseUrl = '', String groqModel = 'llama-3.1-8b-instant'}) {
     _apiKey = key;
+    _baseUrl = baseUrl;
+    _groqModel = groqModel;
   }
 
   static String get apiKey {
@@ -11,7 +15,6 @@ class ApiService {
       return configuredKey;
     }
 
-    // Fallbacks to environment variables
     const defineKey = String.fromEnvironment('AI_AGENT_API_KEY');
     if (defineKey.isNotEmpty) {
       return defineKey.trim();
@@ -23,9 +26,15 @@ class ApiService {
     }
 
     throw StateError(
-      'Missing Gemini API key. Please configure it in your environment or via AppConfig.',
+      'Missing API key. Please configure it in your environment or via AppConfig.',
     );
   }
+
+  static String get baseUrl => _baseUrl;
+
+  static String get groqModel => _groqModel;
+
+  static bool get isGroq => _baseUrl.contains('groq.com');
 
   static bool get isConfigured {
     try {

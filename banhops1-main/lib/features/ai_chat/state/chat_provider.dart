@@ -263,7 +263,9 @@ class ChatProvider extends ChangeNotifier {
       return;
     }
 
-    await setModel(isTextOnly: isTextOnly);
+    if (!ApiService.isGroq) {
+      await setModel(isTextOnly: isTextOnly);
+    }
     setLoading(value: true);
     String chatId = getChatId();
     final imageFiles = isTextOnly
@@ -292,7 +294,9 @@ class ChatProvider extends ChangeNotifier {
     }
 
     List<Content> history = [];
-    history = await getHistory(chatId: chatId);
+    if (!ApiService.isGroq) {
+      history = await getHistory(chatId: chatId);
+    }
     List<String> imagesUrls = getImagesUrls(imageFiles: imageFiles);
     final messagesBox =
         await Hive.openBox('${Constants.chatMessagesBox}$chatId');
@@ -315,16 +319,26 @@ class ChatProvider extends ChangeNotifier {
       setCurrentChatId(newChatId: chatId);
     }
 
-    await sendMessageAndWaitForResponse(
-      message: promptToSend, // Send enriched prompt to Gemini
-      chatId: chatId,
-      isTextOnly: isTextOnly,
-      imageFiles: imageFiles,
-      history: history,
-      userMessage: userMessage,
-      modelMessageId: assistantMessageId.toString(),
-      messagesBox: messagesBox,
-    );
+    if (ApiService.isGroq) {
+      await _sendGroqMessage(
+        message: promptToSend,
+        chatId: chatId,
+        userMessage: userMessage,
+        modelMessageId: assistantMessageId.toString(),
+        messagesBox: messagesBox,
+      );
+    } else {
+      await sendMessageAndWaitForResponse(
+        message: promptToSend,
+        chatId: chatId,
+        isTextOnly: isTextOnly,
+        imageFiles: imageFiles,
+        history: history,
+        userMessage: userMessage,
+        modelMessageId: assistantMessageId.toString(),
+        messagesBox: messagesBox,
+      );
+    }
   }
 
   // send message to the model and wait for the response
@@ -484,6 +498,90 @@ class ChatProvider extends ChangeNotifier {
           element.role == Role.assistant &&
           element.message.isEmpty,
     );
+  }
+
+  Future<void> _sendGroqMessage({
+    required String message,
+    required String chatId,
+    required Message userMessage,
+    required String modelMessageId,
+    required Box messagesBox,
+  }) async {
+    final assistantMessage = userMessage.copyWith(
+      messageId: modelMessageId,
+      role: Role.assistant,
+      message: StringBuffer(),
+      timeSent: DateTime.now(),
+    );
+    _inChatMessages.add(assistantMessage);
+    notifyListeners();
+
+    try {
+      final groqMessages = <Map<String, String>>[];
+      for (final msg in _inChatMessages) {
+        if (msg.messageId == userMessage.messageId && msg.role == Role.user) {
+          continue;
+        }
+        groqMessages.add({
+          'role': msg.role == Role.user ? 'user' : 'assistant',
+          'content': msg.message.toString(),
+        });
+      }
+      groqMessages.add({
+        'role': 'user',
+        'content': message,
+      });
+
+      final uri = Uri.parse(ApiService.baseUrl);
+      final response = await http
+          .post(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ${ApiService.apiKey}',
+            },
+            body: jsonEncode({
+              'model': ApiService.groqModel,
+              'messages': [
+                {'role': 'system', 'content': Constants.assistantSystemInstruction},
+                ...groqMessages,
+              ],
+              'temperature': 0.7,
+              'max_tokens': 2048,
+            }),
+          )
+          .timeout(_requestTimeout);
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final decoded = jsonDecode(response.body);
+        final text = decoded['choices']?[0]?['message']?['content']
+                ?.toString()
+                .trim() ??
+            '';
+        _applyAssistantText(assistantMessage: assistantMessage, text: text);
+      } else {
+        throw Exception('Groq API error ${response.statusCode}: ${response.body}');
+      }
+
+      await saveMessagesToDB(
+        chatID: chatId,
+        userMessage: userMessage,
+        assistantMessage: assistantMessage,
+        messagesBox: messagesBox,
+      );
+    } catch (error, stackTrace) {
+      _removeAssistantDraft(assistantMessage);
+      notifyListeners();
+      Error.throwWithStackTrace(
+        StateError(formatChatError(error)),
+        stackTrace,
+      );
+    } finally {
+      if (messagesBox.isOpen) {
+        await messagesBox.close();
+      }
+      setLoading(value: false);
+    }
   }
 
   void _applyAssistantText({

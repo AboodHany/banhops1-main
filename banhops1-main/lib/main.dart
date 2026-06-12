@@ -17,8 +17,12 @@ void main() async {
   ChatPersistenceService.baseUrl = config.backendBaseUrl;
   ForgotPasswordService.baseUrl = config.backendBaseUrl;
 
-  // Configure Gemini API Key and initialize local Hive DB
-  ApiService.init(config.aiAgentApiKey);
+  // Configure AI API Key and initialize local Hive DB
+  ApiService.init(
+    config.aiAgentApiKey,
+    baseUrl: config.aiAgentBaseUrl,
+    groqModel: config.groqModel,
+  );
   await ChatProvider.initHive();
 
   await SupabaseService.initialize(config);
