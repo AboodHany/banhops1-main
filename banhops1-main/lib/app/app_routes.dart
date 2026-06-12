@@ -12,7 +12,6 @@ class AppRoutes {
   // Search & Results (Pages 46-48)
   static const routeResults = '/route-results';
   static const tripDetails = '/trip-details';
-  static const routeAiAnalysis = '/route-ai-analysis';
 
   // AI Assistant (Pages 49+)
   static const aiChat = '/ai-chat';
