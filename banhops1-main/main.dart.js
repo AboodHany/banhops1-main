@@ -56177,7 +56177,7 @@ var $async$IZ=A.v(function(b,c){if(b===1)return A.q(c,r)
 for(;;)switch(s){case 0:q.a_()
 p=A.b([new A.iW("You are Banhops AI, a friendly and helpful Egyptian transit assistant. Your primary expertise is in Egyptian transit and travel in Benha and Qalyubia (routes, fares, schedules, transfers, cities, neighborhoods, landmarks, nearby services). If the user asks about a currently planned trip, use the provided trip context. Reply in the same language as the user: Arabic if Arabic, English if English. Mention internal Suzuki fare is 5 EGP when relevant to transit questions. If you recommend a route, format it in this structure at the very end of your response:\n<ROUTE>\ntransport: [TRAIN/MICROBUS/PUBLIC_BUS]\ncost_min: [minimum cost in EGP]\ncost_max: [maximum cost in EGP]\ntime_min: [minimum duration in minutes]\ntime_max: [maximum duration in minutes]\n<ROUTE/>\nUse Google Search when you need up-to-date details. Be helpful, concise, and friendly.")],t.Uz)
 o=q.e
-q.d=o==null?q.e=A.blH(A.b0L(),new A.Gf(2048,0.45,0.9,32),"gemini-2.0-flash",new A.hw("system",p)):o
+q.d=o==null?q.e=A.blH(A.b0L(),new A.Gf(2048,0.45,0.9,32),"gemini-1.5-flash",new A.hw("system",p)):o
 q.a_()
 return A.r(null,r)}})
 return A.t($async$IZ,r)},
@@ -56332,7 +56332,7 @@ if(f.length===0){q=""
 s=1
 break}p=t.N
 s=3
-return A.m(A.xp(A.dv("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",0,null).ts(0,A.a3(["key",f],p,t.z)),B.a5.pM(A.a3(["contents",A.b([A.a3(["parts",A.b([A.a3(["text",a],p,p)],t.m0)],p,t.xW)],t.Ud),"generationConfig",A.a3(["temperature",0.45,"maxOutputTokens",2048],p,t.Ci)],p,t.K),null),null,A.a3(["Content-Type","application/json"],p,p)).oH(0,B.U_),$async$CE)
+return A.m(A.xp(A.dv("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",0,null).ts(0,A.a3(["key",f],p,t.z)),B.a5.pM(A.a3(["contents",A.b([A.a3(["parts",A.b([A.a3(["text",a],p,p)],t.m0)],p,t.xW)],t.Ud),"generationConfig",A.a3(["temperature",0.45,"maxOutputTokens",2048],p,t.Ci)],p,t.K),null),null,A.a3(["Content-Type","application/json"],p,p)).oH(0,B.U_),$async$CE)
 case 3:o=c
 p=o.b
 if(p>=200&&p<300){n=J.a1(B.a5.jz(0,A.dH(A.dG(o.e)).bK(0,o.w),null),"candidates")

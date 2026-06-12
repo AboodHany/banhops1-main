@@ -431,7 +431,7 @@ class ChatProvider extends ChangeNotifier {
     if (apiKey.isEmpty) return '';
 
     final uri = Uri.parse(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
     ).replace(queryParameters: {'key': apiKey});
 
     final body = jsonEncode({
