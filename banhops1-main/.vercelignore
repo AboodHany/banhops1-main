@@ -10,9 +10,7 @@ lib/
 test/
 scratch/
 supabase/
-assets/
-canvaskit/
-icons/
+
 
 # Ignore everything inside build directory
 build/*
