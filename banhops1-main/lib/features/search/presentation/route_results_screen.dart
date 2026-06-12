@@ -235,6 +235,40 @@ class _RouteResultsScreenState extends State<RouteResultsScreen> {
                           },
                         ),
                 ),
+                SafeArea(
+                  top: false,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        final prompt = localization.locale.languageCode == 'ar'
+                            ? 'المقارنة بين الطرق او البحث عن طرق اخري؟ من ${widget.originLabel} إلى ${widget.destinationLabel}'
+                            : 'Compare routes or search for other routes? From ${widget.originLabel} to ${widget.destinationLabel}';
+                        Navigator.of(context).pushNamed(
+                          AppRoutes.aiChat,
+                          arguments: {
+                            'initialPrompt': prompt,
+                          },
+                        );
+                      },
+                      icon: const Icon(Icons.compare_arrows_rounded),
+                      label: Text(
+                        localization.locale.languageCode == 'ar'
+                            ? 'المقارنة بين الطرق او البحث عن طرق اخري؟'
+                            : 'Compare routes or search for other routes?',
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1B998B),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
     );
@@ -332,6 +366,11 @@ class _RouteCard extends StatelessWidget {
               const SizedBox(height: 12),
               Row(
                 children: [
+                  _InfoPill(
+                    icon: Icons.access_time_outlined,
+                    label: '${route.durationMinutes} ${localization.translate('min')}',
+                  ),
+                  const SizedBox(width: 12),
                   _InfoPill(
                     icon: Icons.payments_outlined,
                     label: '${route.estimatedCost} ${localization.translate('egp')}',

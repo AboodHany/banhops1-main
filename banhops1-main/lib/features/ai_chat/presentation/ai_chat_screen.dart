@@ -15,7 +15,9 @@ import 'package:banhops1/core/state/trip_planner_controller.dart';
 import 'package:provider/provider.dart';
 
 class AIChatScreen extends StatefulWidget {
-  const AIChatScreen({super.key});
+  const AIChatScreen({super.key, this.initialPrompt});
+
+  final String? initialPrompt;
 
   @override
   State<AIChatScreen> createState() => _AIChatScreenState();
@@ -30,6 +32,11 @@ class _AIChatScreenState extends State<AIChatScreen> {
   void initState() {
     _scrollController.addListener(_syncJumpToLatestButton);
     super.initState();
+    if (widget.initialPrompt != null && widget.initialPrompt!.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _sendSuggestion(widget.initialPrompt!);
+      });
+    }
   }
 
   @override

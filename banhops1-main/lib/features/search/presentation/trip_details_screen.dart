@@ -1,13 +1,20 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/models/transit_route_option.dart';
 import '../../../core/models/transit_enums.dart';
 import '../../../core/localization/app_localizations.dart';
+import '../../../core/models/location_node.dart';
+import '../../../core/data/demo_transit_catalog.dart';
+import '../../../app/app_routes.dart';
 
 /// TripDetailsScreen - Pages 47-48: Trip Details Layout
 /// Shows specific step-by-step guidance, pricing for 2026, and Google Maps URL launch button
-class TripDetailsScreen extends StatelessWidget {
+class TripDetailsScreen extends StatefulWidget {
   const TripDetailsScreen({
     super.key,
     required this.route,
@@ -18,6 +25,323 @@ class TripDetailsScreen extends StatelessWidget {
   final TransitRouteOption route;
   final String origin;
   final String destination;
+
+  @override
+  State<TripDetailsScreen> createState() => _TripDetailsScreenState();
+}
+
+class _TripDetailsScreenState extends State<TripDetailsScreen> {
+  final List<LocationNode> _routePoints = [];
+  final List<Marker> _markers = [];
+  final List<Polyline> _polylines = [];
+  final MapController _mapController = MapController();
+  bool _mapDataInitialized = false;
+
+  String? _calculatedDistance;
+  String? _calculatedDuration;
+  bool _isMapRouteLoading = false;
+
+  void _loadRoadRoute() async {
+    if (_routePoints.length < 2) return;
+    setState(() {
+      _isMapRouteLoading = true;
+    });
+
+    try {
+      final coords = _routePoints.map((p) => '${p.longitude},${p.latitude}').join(';');
+      final url = Uri.parse('https://router.project-osrm.org/route/v1/driving/$coords?overview=full&geometries=polyline');
+      
+      debugPrint('OSRM Request: $url');
+      final response = await http.get(url);
+      debugPrint('OSRM Response Status: ${response.statusCode}');
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['routes'] != null && data['routes'].isNotEmpty) {
+          final routeData = data['routes'][0];
+          final encodedPolyline = routeData['geometry'] as String;
+          final distanceMeters = routeData['distance'] as num;
+          final durationSeconds = routeData['duration'] as num;
+
+          debugPrint('OSRM Encoded Polyline: $encodedPolyline');
+          final decodedPoints = _decodePolyline(encodedPolyline);
+          debugPrint('OSRM Decoded Points Count: ${decodedPoints.length}');
+          if (decodedPoints.isNotEmpty) {
+            debugPrint('First Point: ${decodedPoints.first}');
+            debugPrint('Last Point: ${decodedPoints.last}');
+          }
+
+          setState(() {
+            _polylines.clear();
+            _polylines.add(
+              Polyline(
+                points: decodedPoints,
+                color: const Color(0xFF0F4C81),
+                strokeWidth: 6,
+              ),
+            );
+
+            final distanceKm = distanceMeters / 1000.0;
+            final durationMins = (durationSeconds / 60.0).round();
+            final localeCode = AppLocalizations.of(context).locale.languageCode;
+
+            if (localeCode == 'ar') {
+              _calculatedDistance = '${distanceKm.toStringAsFixed(1)} كم';
+              _calculatedDuration = '$durationMins دقيقة';
+            } else {
+              _calculatedDistance = '${distanceKm.toStringAsFixed(1)} km';
+              _calculatedDuration = '$durationMins mins';
+            }
+            _isMapRouteLoading = false;
+          });
+          
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              _fitPreciseRouteBounds(decodedPoints);
+            }
+          });
+        } else {
+          debugPrint('OSRM Response has no routes');
+          setState(() {
+            _isMapRouteLoading = false;
+          });
+        }
+      } else {
+        debugPrint('OSRM Request failed with status: ${response.statusCode}');
+        setState(() {
+          _isMapRouteLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading road route: $e');
+      setState(() {
+        _isMapRouteLoading = false;
+      });
+    }
+  }
+
+  void _fitPreciseRouteBounds(List<LatLng> points) {
+    if (points.isEmpty) return;
+    try {
+      final bounds = LatLngBounds.fromPoints(points);
+      _mapController.fitCamera(
+        CameraFit.bounds(
+          bounds: bounds,
+          padding: const EdgeInsets.all(50),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Error fitting bounds: $e');
+    }
+  }
+
+  List<LatLng> _decodePolyline(String encoded) {
+    List<LatLng> points = [];
+    int index = 0, len = encoded.length;
+    int lat = 0, lng = 0;
+
+    while (index < len) {
+      int b, shift = 0, result = 0;
+      do {
+        if (index >= len) return points;
+        b = encoded.codeUnitAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      int dlat = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1)).toSigned(32);
+      lat += dlat;
+
+      shift = 0;
+      result = 0;
+      do {
+        if (index >= len) return points;
+        b = encoded.codeUnitAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      int dlng = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1)).toSigned(32);
+      lng += dlng;
+
+      points.add(LatLng(lat / 1E5, lng / 1E5));
+    }
+    return points;
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_mapDataInitialized) {
+      _initMapData();
+      _mapDataInitialized = true;
+    }
+  }
+
+  void _initMapData() {
+    final localization = AppLocalizations.of(context);
+    final localeCode = localization.locale.languageCode;
+    
+    final transferLocs = _getTransferLocations(widget.route.id, localeCode, widget.route.transfers);
+    
+    LocationNode findNode(String nameOrLabel) {
+      return DemoTransitCatalog.locations.firstWhere(
+        (l) {
+          final normalizedSearch = nameOrLabel.trim().toLowerCase();
+          final nameMatch = l.name.trim().toLowerCase() == normalizedSearch;
+          final aliasMatch = l.alias?.trim().toLowerCase() == normalizedSearch;
+          final transMatch = localization.translateLocation(l.name).trim().toLowerCase() == normalizedSearch;
+          return nameMatch || aliasMatch || transMatch;
+        },
+        orElse: () => LocationNode.empty(),
+      );
+    }
+
+    final startNode = findNode(widget.origin);
+    final endNode = findNode(widget.destination);
+
+    _routePoints.clear();
+    _markers.clear();
+    _polylines.clear();
+
+    if (startNode.id != 0) {
+      _routePoints.add(startNode);
+      _markers.add(
+        Marker(
+          point: LatLng(startNode.latitude, startNode.longitude),
+          width: 45,
+          height: 45,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.all(3),
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Color(0xFF0F4C81),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.my_location,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    for (int i = 0; i < transferLocs.length; i++) {
+      final tLoc = transferLocs[i];
+      final tNode = findNode(tLoc);
+      if (tNode.id != 0) {
+        _routePoints.add(tNode);
+        _markers.add(
+          Marker(
+            point: LatLng(tNode.latitude, tNode.longitude),
+            width: 45,
+            height: 45,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.all(3),
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: Colors.orange,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.alt_route_rounded,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+            ),
+          ),
+        );
+      }
+    }
+
+    if (endNode.id != 0) {
+      _routePoints.add(endNode);
+      _markers.add(
+        Marker(
+          point: LatLng(endNode.latitude, endNode.longitude),
+          width: 45,
+          height: 45,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.all(3),
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Color(0xFF1B998B),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.location_on,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (_routePoints.length >= 2) {
+      final polylinePoints = _routePoints.map((node) => LatLng(node.latitude, node.longitude)).toList();
+      _polylines.add(
+        Polyline(
+          points: polylinePoints,
+          color: const Color(0xFF0F4C81),
+          strokeWidth: 5,
+        ),
+      );
+      _loadRoadRoute();
+    }
+  }
+
+  void _fitRouteBounds() {
+    if (_routePoints.isEmpty) return;
+    try {
+      final points = _routePoints.map((node) => LatLng(node.latitude, node.longitude)).toList();
+      final bounds = LatLngBounds.fromPoints(points);
+      _mapController.fitCamera(
+        CameraFit.bounds(
+          bounds: bounds,
+          padding: const EdgeInsets.all(50),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Error fitting route bounds: $e');
+    }
+  }
 
   static const List<Map<String, dynamic>> _trainsData = [
     {
@@ -83,7 +407,7 @@ class TripDetailsScreen extends StatelessWidget {
   ];
 
   Future<void> _launchGoogleMaps() async {
-    final Uri googleMapsUri = Uri.parse(route.gmapsUrl);
+    final Uri googleMapsUri = Uri.parse(widget.route.gmapsUrl);
     if (await canLaunchUrl(googleMapsUri)) {
       await launchUrl(googleMapsUri, mode: LaunchMode.externalApplication);
     } else {
@@ -623,6 +947,10 @@ class TripDetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final route = widget.route;
+    final origin = widget.origin;
+    final destination = widget.destination;
+
     final localization = AppLocalizations.of(context);
     final localeCode = localization.locale.languageCode;
     final transferLocs = _getTransferLocations(route.id, localeCode, route.transfers);
@@ -841,6 +1169,150 @@ class TripDetailsScreen extends StatelessWidget {
                       ],
                     ),
                   ),
+                  if (_routePoints.isNotEmpty) ...[
+                    const SizedBox(height: 20),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          localeCode == 'ar' ? 'خريطة الطريق' : 'Route Map',
+                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                        ),
+                        const SizedBox(height: 12),
+                        Container(
+                          height: 360,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(
+                              color: Theme.of(context).colorScheme.outlineVariant,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(24),
+                            child: Stack(
+                              children: [
+                                FlutterMap(
+                                  mapController: _mapController,
+                                  options: MapOptions(
+                                    initialCenter: LatLng(_routePoints.first.latitude, _routePoints.first.longitude),
+                                    initialZoom: 10.5,
+                                    onMapReady: () {
+                                      _fitRouteBounds();
+                                    },
+                                  ),
+                                  children: [
+                                    TileLayer(
+                                      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                      userAgentPackageName: 'com.banhops.app',
+                                    ),
+                                    PolylineLayer(
+                                      polylines: _polylines,
+                                    ),
+                                    MarkerLayer(
+                                      markers: _markers,
+                                    ),
+                                  ],
+                                ),
+                                if (_calculatedDistance != null && _calculatedDuration != null)
+                                  Positioned(
+                                    top: 12,
+                                    left: 12,
+                                    right: 12,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withValues(alpha: 0.9),
+                                        borderRadius: BorderRadius.circular(12),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(alpha: 0.15),
+                                            blurRadius: 6,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              const Icon(Icons.directions_car, size: 16, color: Color(0xFF0F4C81)),
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                _calculatedDistance!,
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.w700,
+                                                  fontSize: 12,
+                                                  color: Colors.black87,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          Container(width: 1, height: 16, color: Colors.grey[300]),
+                                          Row(
+                                            children: [
+                                              const Icon(Icons.access_time, size: 16, color: Color(0xFF0F4C81)),
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                _calculatedDuration!,
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.w700,
+                                                  fontSize: 12,
+                                                  color: Colors.black87,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                if (_isMapRouteLoading)
+                                  Positioned(
+                                    bottom: 12,
+                                    right: 12,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withValues(alpha: 0.7),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const SizedBox(
+                                            width: 12,
+                                            height: 12,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            localeCode == 'ar' ? 'جاري تحميل المسار...' : 'Loading route...',
+                                            style: const TextStyle(color: Colors.white, fontSize: 10),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                   const SizedBox(height: 20),
 
                   // Step-by-Step Details (Step-by-Step Guidance Card)
@@ -955,6 +1427,33 @@ class TripDetailsScreen extends StatelessWidget {
                   const SizedBox(height: 20),
 
                   // Action Buttons
+                  SizedBox(
+                    width: double.infinity,
+                    height: 54,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.of(context).pushNamed(
+                          AppRoutes.routeAiAnalysis,
+                          arguments: {
+                            'route': widget.route,
+                            'origin': widget.origin,
+                            'destination': widget.destination,
+                          },
+                        );
+                      },
+                      icon: const Icon(Icons.psychology_rounded),
+                      label: Text(
+                        localeCode == 'ar'
+                            ? 'تحليل بواسطة الذكاء الصطناعي'
+                            : 'AI Route Analysis',
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.deepPurple,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
                   SizedBox(
                     width: double.infinity,
                     height: 54,

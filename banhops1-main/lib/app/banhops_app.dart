@@ -21,6 +21,7 @@ import '../core/services/user_session.dart';
 import '../features/navigation/main_navigation_hub.dart';
 import '../features/search/presentation/route_results_screen.dart';
 import '../features/search/presentation/trip_details_screen.dart';
+import '../features/search/presentation/route_ai_analysis_screen.dart';
 import '../features/splash/splash_screen.dart';
 import '../features/ai_chat/presentation/ai_chat_screen.dart';
 import '../features/train/presentation/train_screen.dart';
@@ -192,10 +193,23 @@ class BanHopsApp extends StatelessWidget {
                     ),
                   );
 
+                case AppRoutes.routeAiAnalysis:
+                  final args = settings.arguments as Map<String, dynamic>?;
+                  return MaterialPageRoute(
+                    builder: (_) => RouteAiAnalysisScreen(
+                      route: args!['route'],
+                      origin: args['origin'] ?? 'Unknown',
+                      destination: args['destination'] ?? 'Unknown',
+                    ),
+                  );
+
                 // AI Assistant (Pages 49+)
                 case AppRoutes.aiChat:
+                  final args = settings.arguments as Map<String, dynamic>?;
                   return MaterialPageRoute(
-                    builder: (_) => const AIChatScreen(),
+                    builder: (_) => AIChatScreen(
+                      initialPrompt: args?['initialPrompt'],
+                    ),
                   );
 
                 case AppRoutes.train:
