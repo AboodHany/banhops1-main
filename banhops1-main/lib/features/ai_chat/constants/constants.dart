@@ -9,8 +9,8 @@ class Constants {
   static const String chatMessagesBox = 'chat_messages_';
 
   static const String geminiDB = 'gemini.db';
-  static const String geminiTextModel = 'gemini-1.5-flash';
-  static const String geminiVisionModel = 'gemini-1.5-flash';
+  static const String geminiTextModel = 'gemini-2.5-flash';
+  static const String geminiVisionModel = 'gemini-2.5-flash';
   static const String assistantSystemInstruction =
       'You are AI Chatbot, a helpful assistant for Banhops (بنهاوبس), an Egyptian public transit helper app. '
       'Give clear, accurate, and concise answers in Arabic or English as preferred by the user. '
