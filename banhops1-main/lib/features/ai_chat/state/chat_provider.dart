@@ -18,6 +18,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:path_provider/path_provider.dart' as path;
 import 'package:image_picker/image_picker.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:http/http.dart' as http;
 import 'package:uuid/uuid.dart';
 
 class ChatProvider extends ChangeNotifier {
@@ -359,6 +360,7 @@ class ChatProvider extends ChangeNotifier {
         chatSession: chatSession,
         content: content,
         assistantMessage: assistantMessage,
+        rawMessage: message,
       );
       await saveMessagesToDB(
         chatID: chatId,
@@ -385,6 +387,7 @@ class ChatProvider extends ChangeNotifier {
     required ChatSession chatSession,
     required Content content,
     required Message assistantMessage,
+    String? rawMessage,
   }) async {
     try {
       final response =
@@ -394,10 +397,26 @@ class ChatProvider extends ChangeNotifier {
         text: response.text?.trim() ?? '',
       );
     } catch (error) {
+      debugPrint('AI Chat error (package): $error');
       if (!shouldRetryRequest(error)) {
+        if (rawMessage != null) {
+          try {
+            final fallbackText = await _fallbackHttpRequest(rawMessage);
+            if (fallbackText.isNotEmpty) {
+              _applyAssistantText(
+                assistantMessage: assistantMessage,
+                text: fallbackText,
+              );
+              return;
+            }
+          } catch (fallbackError) {
+            debugPrint('AI Chat fallback error: $fallbackError');
+          }
+        }
         rethrow;
       }
 
+      debugPrint('AI Chat: Retrying request...');
       final retryResponse =
           await chatSession.sendMessage(content).timeout(_requestTimeout);
       _applyAssistantText(
@@ -405,6 +424,57 @@ class ChatProvider extends ChangeNotifier {
         text: retryResponse.text?.trim() ?? '',
       );
     }
+  }
+
+  Future<String> _fallbackHttpRequest(String message) async {
+    final apiKey = ApiService.apiKey;
+    if (apiKey.isEmpty) return '';
+
+    final uri = Uri.parse(
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$apiKey',
+    );
+
+    final body = jsonEncode({
+      'contents': [
+        {
+          'parts': [
+            {'text': message},
+          ],
+        },
+      ],
+      'generationConfig': {
+        'temperature': 0.45,
+        'maxOutputTokens': 2048,
+      },
+    });
+
+    final response = await http
+        .post(
+          uri,
+          headers: {'Content-Type': 'application/json'},
+          body: body,
+        )
+        .timeout(const Duration(seconds: 30));
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final decoded = jsonDecode(response.body);
+      final candidates = decoded['candidates'];
+      if (candidates != null && candidates is List && candidates.isNotEmpty) {
+        final parts = candidates[0]['content']?['parts'];
+        if (parts != null && parts is List) {
+          final buffer = StringBuffer();
+          for (final part in parts) {
+            if (part is Map && part.containsKey('text')) {
+              buffer.write(part['text']);
+            }
+          }
+          final result = buffer.toString().trim();
+          if (result.isNotEmpty) return result;
+        }
+      }
+    }
+
+    throw Exception('Fallback API error ${response.statusCode}');
   }
 
   void _removeAssistantDraft(Message assistantMessage) {
