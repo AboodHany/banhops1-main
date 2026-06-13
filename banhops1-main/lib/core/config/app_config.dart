@@ -63,10 +63,10 @@ class AppConfig {
       supabaseAnonKey = 'sb_publishable_7dbspU0EF5Ekj-B-agyN1g_LCO8_4Ux';
     }
     if (aiAgentBaseUrl.isEmpty) {
-      aiAgentBaseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+      aiAgentBaseUrl = 'https://api.groq.com/openai/v1/chat/completions';
     }
     if (aiAgentApiKey.isEmpty) {
-      aiAgentApiKey = 'AQ.Ab8RN6Ja8RXikA2lnXcza98WSNbEV3wvVZKhmgl_DTu2ejC6xw'; // Fallback to avoid missing API key error
+      aiAgentApiKey = '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'; // Fallback to avoid missing API key error
     }
 
     return AppConfig(
